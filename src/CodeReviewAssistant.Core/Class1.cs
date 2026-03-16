@@ -1,6 +1,4 @@
-﻿namespace CodeReviewAssistant.Core;
-
-public class Class1
-{
-
-}
+﻿// Domain models: Models/
+// Interfaces:    Interfaces/
+// URL parsing:   Parsing/
+// Exceptions:    Exceptions/

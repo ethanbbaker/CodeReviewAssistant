@@ -1,0 +1,102 @@
+@page "/pull-request"
+@using CodeReviewAssistant.Core.Models
+@using CodeReviewAssistant.Core.Parsing
+@rendermode InteractiveServer
+
+<PageTitle>Review Pull Request</PageTitle>
+
+<div class="container py-4" style="max-width: 720px;">
+    <h1 class="mb-1">Review a Pull Request</h1>
+    <p class="text-muted mb-4">Paste a GitHub PR URL to get an AI-powered code review.</p>
+
+    <EditForm Model="@_model" OnValidSubmit="HandleSubmit" FormName="pr-form">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="prUrl" class="form-label fw-semibold">GitHub PR URL</label>
+            <InputText id="prUrl"
+                       class="@($"form-control form-control-lg {UrlInputCssClass}")"
+                       @bind-Value="_model.Url"
+                       @oninput="OnUrlInput"
+                       placeholder="https://github.com/owner/repo/pull/123"
+                       autocomplete="off"
+                       spellcheck="false" />
+
+            @if (_parsed is not null)
+            {
+                <div class="form-text text-success mt-1">
+                    <span class="me-3">&#x2714; <strong>Owner:</strong> @_parsed.Owner</span>
+                    <span class="me-3"><strong>Repo:</strong> @_parsed.Repo</span>
+                    @if (_parsed.IsPullRequest)
+                    {
+                        <span><strong>PR&nbsp;#</strong>@_parsed.PullRequestNumber</span>
+                    }
+                    else
+                    {
+                        <span class="text-warning">&#9432; Repository URL detected &mdash; full-repo review coming soon.</span>
+                    }
+                </div>
+            }
+            else if (_showValidation && !string.IsNullOrWhiteSpace(_model.Url))
+            {
+                <div class="form-text text-danger mt-1">
+                    &#x2718; Not a valid GitHub URL. Expected format:
+                    <code>https://github.com/owner/repo/pull/123</code>
+                </div>
+            }
+
+            <ValidationMessage For="@(() => _model.Url)" class="text-danger small" />
+        </div>
+
+        <button type="submit"
+                class="btn btn-primary btn-lg"
+                disabled="@(!CanSubmit)">
+            Start Review
+        </button>
+    </EditForm>
+
+    @if (_submitted && _parsed?.IsPullRequest == true)
+    {
+        <hr class="my-4" />
+        <div class="alert alert-info">
+            <strong>Ready to review:</strong>
+            <a href="@_parsed.ToString()" target="_blank" rel="noopener noreferrer">@_parsed</a>
+            <br />
+            <small class="text-muted">AI review integration coming in the next phase.</small>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly PrInputModel _model = new();
+    private GitHubPrReference? _parsed;
+    private bool _showValidation;
+    private bool _submitted;
+
+    private string UrlInputCssClass =>
+        _showValidation && !string.IsNullOrWhiteSpace(_model.Url)
+            ? (_parsed is not null ? "is-valid" : "is-invalid")
+            : string.Empty;
+
+    private bool CanSubmit => _parsed?.IsPullRequest == true;
+
+    private void OnUrlInput(ChangeEventArgs e)
+    {
+        _model.Url = e.Value?.ToString() ?? string.Empty;
+        _submitted = false;
+        _showValidation = !string.IsNullOrWhiteSpace(_model.Url);
+        _parsed = GitHubUrlParser.TryParse(_model.Url);
+    }
+
+    private void HandleSubmit()
+    {
+        _parsed = GitHubUrlParser.TryParse(_model.Url);
+        if (_parsed?.IsPullRequest == true)
+            _submitted = true;
+    }
+
+    private sealed class PrInputModel
+    {
+        public string Url { get; set; } = string.Empty;
+    }
+}
