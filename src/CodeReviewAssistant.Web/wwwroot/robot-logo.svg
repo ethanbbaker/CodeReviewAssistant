@@ -1,0 +1,79 @@
+<svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- Glow filter -->
+  <defs>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── ROBOT ── -->
+  <!-- Antenna -->
+  <line x1="38" y1="8" x2="38" y2="16" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="38" cy="6" r="3.5" fill="#7c3aed" filter="url(#glow)"/>
+
+  <!-- Head body -->
+  <rect x="18" y="16" width="40" height="34" rx="7" fill="url(#headGrad)" stroke="#7c3aed" stroke-width="1.5"/>
+
+  <!-- Eye sockets (dark) -->
+  <rect x="24" y="26" width="11" height="9" rx="2.5" fill="#0f0f1a"/>
+  <rect x="43" y="26" width="11" height="9" rx="2.5" fill="#0f0f1a"/>
+  <!-- Glowing pupils -->
+  <rect x="26" y="28" width="7" height="5" rx="1.5" fill="#06b6d4" filter="url(#glow)"/>
+  <rect x="45" y="28" width="7" height="5" rx="1.5" fill="#06b6d4" filter="url(#glow)"/>
+  <!-- Pupil highlights -->
+  <rect x="27" y="28.5" width="2.5" height="2" rx="0.5" fill="white" opacity="0.55"/>
+  <rect x="46" y="28.5" width="2.5" height="2" rx="0.5" fill="white" opacity="0.55"/>
+
+  <!-- Mouth LED strip -->
+  <rect x="26" y="41" width="24" height="4" rx="2" fill="#1e1b4b" stroke="#7c3aed" stroke-width="0.8"/>
+  <circle cx="30" cy="43" r="1.4" fill="#7c3aed" filter="url(#glow)"/>
+  <circle cx="38" cy="43" r="1.4" fill="#06b6d4" filter="url(#glow)"/>
+  <circle cx="46" cy="43" r="1.4" fill="#7c3aed" filter="url(#glow)"/>
+
+  <!-- Ear panels -->
+  <rect x="12" y="27" width="6" height="10" rx="3" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1"/>
+  <rect x="58" y="27" width="6" height="10" rx="3" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1"/>
+
+  <!-- Neck -->
+  <rect x="31" y="50" width="14" height="5" rx="2.5" fill="#1e1b4b"/>
+
+  <!-- ── MONITOR ── -->
+  <!-- Stand -->
+  <rect x="77" y="78" width="3" height="8" rx="1" fill="#2d2d4e"/>
+  <rect x="71" y="85" width="15" height="3" rx="1.5" fill="#2d2d4e"/>
+
+  <!-- Screen bezel -->
+  <rect x="62" y="20" width="52" height="58" rx="5" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1.5"/>
+  <!-- Screen surface -->
+  <rect x="65" y="24" width="46" height="50" rx="3" fill="#0d0d1a"/>
+
+  <!-- Code lines (syntax-coloured) -->
+  <!-- Line 1: keyword + identifier -->
+  <rect x="69" y="30" width="12" height="3" rx="1" fill="#c084fc"/>
+  <rect x="83" y="30" width="18" height="3" rx="1" fill="#e2e8f0" opacity="0.7"/>
+
+  <!-- Line 2: indent + string -->
+  <rect x="73" y="37" width="8" height="3" rx="1" fill="#34d399"/>
+  <rect x="83" y="37" width="22" height="3" rx="1" fill="#fbbf24" opacity="0.85"/>
+
+  <!-- Line 3: indent + function call -->
+  <rect x="73" y="44" width="14" height="3" rx="1" fill="#60a5fa"/>
+  <rect x="89" y="44" width="14" height="3" rx="1" fill="#e2e8f0" opacity="0.5"/>
+
+  <!-- Line 4: indent + comment (dimmer) -->
+  <rect x="73" y="51" width="24" height="3" rx="1" fill="#4b5563" opacity="0.9"/>
+
+  <!-- Line 5: closing brace -->
+  <rect x="69" y="58" width="6" height="3" rx="1" fill="#c084fc"/>
+
+  <!-- Cursor blink indicator -->
+  <rect x="77" y="58" width="2" height="3" rx="0.5" fill="#e2e8f0" opacity="0.8"/>
+
+  <!-- ── GAZE LINE (dashed arc connecting robot to screen) ── -->
+  <path d="M 58 33 C 64 27, 63 28, 62 30" stroke="#06b6d4" stroke-width="1" stroke-dasharray="2 2" opacity="0.5"/>
+</svg>
