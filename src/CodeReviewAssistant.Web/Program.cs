@@ -1,10 +1,27 @@
 using CodeReviewAssistant.Components;
+using CodeReviewAssistant.Core.Interfaces;
+using CodeReviewAssistant.Infrastructure.GitHub;
+using Octokit;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// GitHub client — reads optional PAT from configuration
+builder.Services.AddSingleton<IGitHubClient>(_ =>
+{
+    var token  = builder.Configuration["GitHub:PersonalAccessToken"];
+    var client = new GitHubClient(new ProductHeaderValue("CodeReviewAssistant"));
+
+    if (!string.IsNullOrWhiteSpace(token))
+        client.Credentials = new Credentials(token);
+
+    return client;
+});
+
+builder.Services.AddScoped<IGitHubService, GitHubService>();
 
 var app = builder.Build();
 

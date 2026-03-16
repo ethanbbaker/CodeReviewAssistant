@@ -1,6 +1,1 @@
-﻿namespace CodeReviewAssistant.Infrastructure;
-
-public class Class1
-{
-
-}
+﻿// GitHub API implementation: GitHub/
