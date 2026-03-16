@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeReviewAssistant.Core/CodeReviewAssistant.Core.csproj" />
+    <Project Path="src/CodeReviewAssistant.Infrastructure/CodeReviewAssistant.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/CodeReviewAssistant.Web/">
+    <Project Path="src/CodeReviewAssistant.Web/CodeReviewAssistant.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeReviewAssistant.Tests/CodeReviewAssistant.Tests.csproj" />
+  </Folder>
+</Solution>
