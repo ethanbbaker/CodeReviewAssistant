@@ -1,0 +1,117 @@
+/* ── Card shell ── */
+.diff-card {
+    border: 1px solid rgba(124, 58, 237, 0.18);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    background: #13111f;
+}
+
+/* ── File header ── */
+.diff-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    background: rgba(124, 58, 237, 0.07);
+    border-bottom: 1px solid rgba(124, 58, 237, 0.12);
+}
+
+.diff-file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.diff-old-name {
+    color: #8b949e;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.diff-file-name {
+    color: #e2e8f0;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+}
+
+.diff-file-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.stat-add { color: #34d399; }
+.stat-del { color: #f87171; }
+
+/* ── Status badges ── */
+.badge-status {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 0.15em 0.5em;
+    border-radius: 4px;
+    flex-shrink: 0;
+    font-family: ui-monospace, monospace;
+}
+.badge-add    { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+.badge-del    { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+.badge-mod    { background: rgba(251, 191, 36, 0.12);  color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.25); }
+.badge-rename { background: rgba(96, 165, 250, 0.12);  color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.25); }
+.badge-bin    { background: rgba(139, 148, 158, 0.12); color: #8b949e; border: 1px solid rgba(139, 148, 158, 0.25); }
+
+.badge-truncated {
+    font-size: 0.65rem;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+    border-radius: 4px;
+    padding: 0.15em 0.45em;
+    font-family: ui-monospace, monospace;
+}
+
+/* ── Binary / empty notice ── */
+.diff-binary-notice,
+.diff-empty-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.9rem;
+    font-size: 0.8rem;
+    color: #8b949e;
+    font-style: italic;
+}
+
+/* ── Diff lines table ── */
+.diff-lines {
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
+.diff-truncation-notice {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.75rem;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.05);
+    border-top: 1px dashed rgba(251, 191, 36, 0.2);
+    text-align: center;
+    font-style: italic;
+}

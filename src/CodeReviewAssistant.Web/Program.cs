@@ -1,4 +1,5 @@
 using CodeReviewAssistant.Components;
+using CodeReviewAssistant.Components.Services;
 using CodeReviewAssistant.Core.Interfaces;
 using CodeReviewAssistant.Infrastructure.GitHub;
 using Octokit;
@@ -22,6 +23,7 @@ builder.Services.AddSingleton<IGitHubClient>(_ =>
 });
 
 builder.Services.AddScoped<IGitHubService, GitHubService>();
+builder.Services.AddScoped<IReviewStateService, ReviewStateService>();
 
 var app = builder.Build();
 
