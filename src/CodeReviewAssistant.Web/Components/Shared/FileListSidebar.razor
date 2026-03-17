@@ -1,4 +1,5 @@
 @inject IReviewStateService ReviewState
+@implements IDisposable
 
 <!-- Brand row -->
 <div class="top-row ps-3 navbar navbar-dark">
@@ -11,33 +12,67 @@
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable">
-    <!-- Back / new review button -->
-    <div class="px-3 pt-3 pb-2">
-        <button class="btn btn-back w-100" @onclick="ReviewState.ClearReview">
-            <svg class="inline-icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 010 .708L5.707 8l5.647 5.646a.5.5 0 01-.708.708l-6-6a.5.5 0 010-.708l6-6a.5.5 0 01.708 0z"/>
+
+    <!-- ── Tab strip ───────────────────────────────────────────────── -->
+    <div class="tab-strip">
+
+        <!-- Search / home tab -->
+        <button class="tab-item @(ReviewState.ActiveIndex == null ? "tab-active" : "")"
+                @onclick="() => ReviewState.SetActiveIndex(null)"
+                title="Search for a pull request">
+            <svg class="tab-icon" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
             </svg>
-            New Review
+            <span class="tab-label">Search</span>
         </button>
+
+        <!-- One tab per open PR session -->
+        @for (int i = 0; i < ReviewState.Sessions.Count; i++)
+        {
+            var idx     = i;
+            var session = ReviewState.Sessions[i];
+            <button class="tab-item @(ReviewState.ActiveIndex == idx ? "tab-active" : "")"
+                    @onclick="() => ReviewState.SetActiveIndex(idx)"
+                    title="@session.Context.Title">
+                <svg class="tab-icon" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h4.5a.75.75 0 0 1 .75.75v1.372a2.25 2.25 0 1 0 1.5 0V9.25a2.25 2.25 0 0 0-2.25-2.25h-4.5A.75.75 0 0 1 5 6.25V5.372zm8.25 6.128a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/>
+                </svg>
+                <span class="tab-pr-label">PR&nbsp;#@session.Reference.PullRequestNumber</span>
+                <span class="tab-close"
+                      @onclick:stopPropagation
+                      @onclick="() => ReviewState.RemoveSession(idx)"
+                      title="Close">
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="10" height="10">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </span>
+            </button>
+        }
     </div>
 
-    <!-- PR title + meta -->
-    @if (ReviewState.Context is { } ctx && ReviewState.Reference is { } rf)
+    <!-- ── Active PR content ─────────────────────────────────────────── -->
+    @if (ReviewState.ActiveIndex.HasValue && ReviewState.Context is { } ctx && ReviewState.Reference is { } rf)
     {
-        <div class="pr-meta px-3 pb-2">
+        <!-- PR meta -->
+        <div class="pr-meta px-3 pt-2 pb-2">
             <a class="pr-meta-link"
                href="@rf.ToString()"
                target="_blank" rel="noopener noreferrer"
-               title="@ctx.Title">
+               title="Open on GitHub">
                 PR&nbsp;#@rf.PullRequestNumber
+                <svg style="width:10px;height:10px;vertical-align:-1px;margin-left:2px;opacity:.7;" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                    <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                </svg>
             </a>
             <p class="pr-meta-title" title="@ctx.Title">@ctx.Title</p>
-            <span class="branch-badge">@ctx.BaseBranch</span>
-            <svg style="width:10px;height:10px;opacity:.5;flex-shrink:0;" viewBox="0 0 16 16" fill="currentColor">
-                <path fill-rule="evenodd" d="M6 3.5a.5.5 0 01.5-.5h8a.5.5 0 01.5.5v9a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-2a.5.5 0 011 0V12H14V4H6.5v1.5a.5.5 0 01-1 0v-2z"/>
-                <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 010-.708l3-3a.5.5 0 11.708.708L1.707 7.5H10.5a.5.5 0 010 1H1.707l2.147 2.146a.5.5 0 01-.708.708l-3-3z"/>
-            </svg>
-            <span class="branch-badge">@ctx.HeadBranch</span>
+            <div class="d-flex align-items-center gap-1 flex-wrap mt-1">
+                <span class="branch-badge" title="Base branch">@ctx.BaseBranch</span>
+                <svg style="width:10px;height:10px;opacity:.45;flex-shrink:0;" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M1 8a.5.5 0 01.5-.5h11.793l-3.147-3.146a.5.5 0 01.708-.708l4 4a.5.5 0 010 .708l-4 4a.5.5 0 01-.708-.708L13.293 8.5H1.5A.5.5 0 011 8z"/>
+                </svg>
+                <span class="branch-badge branch-badge-head" title="Head branch">@ctx.HeadBranch</span>
+            </div>
         </div>
 
         <!-- Stats bar -->
@@ -53,7 +88,7 @@
         <nav class="file-nav px-2 pb-3">
             @for (int i = 0; i < ctx.Files.Count; i++)
             {
-                var file = ctx.Files[i];
+                var file   = ctx.Files[i];
                 var anchor = $"file-{i}";
                 <a class="file-item" href="#@anchor" title="@file.FileName">
                     <span class="@GetStatusDot(file.Status)" aria-hidden="true"></span>
@@ -73,17 +108,38 @@
             }
         </nav>
     }
+    else
+    {
+        <!-- Search tab hint -->
+        <div class="search-hint px-3 pt-3">
+            <p class="search-hint-text">
+                Enter a GitHub PR URL in the search field to load a pull request.
+                Each fetched PR will appear as a tab here.
+            </p>
+        </div>
+    }
+
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        ReviewState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ReviewState.OnChange -= StateHasChanged;
+    }
+
     private static string GetStatusDot(DiffStatus status) => status switch
     {
-        DiffStatus.Added    => "status-dot dot-add",
-        DiffStatus.Deleted  => "status-dot dot-del",
-        DiffStatus.Renamed  => "status-dot dot-rename",
-        DiffStatus.Copied   => "status-dot dot-rename",
-        DiffStatus.Binary   => "status-dot dot-binary",
-        _                   => "status-dot dot-mod"
+        DiffStatus.Added   => "status-dot dot-add",
+        DiffStatus.Deleted => "status-dot dot-del",
+        DiffStatus.Renamed => "status-dot dot-rename",
+        DiffStatus.Copied  => "status-dot dot-rename",
+        DiffStatus.Binary  => "status-dot dot-binary",
+        _                  => "status-dot dot-mod"
     };
 
     private static string GetShortName(string path)

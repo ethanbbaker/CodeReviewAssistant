@@ -6,11 +6,12 @@
 @using Octokit
 @inject IGitHubService       GitHubService
 @inject IReviewStateService  ReviewState
+@implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>
-    @(_state == PageState.Reviewing
-        ? $"PR #{ReviewState.Reference?.PullRequestNumber} · {ReviewState.Context?.Title} — CodeReviewAI"
+    @(_state == PageState.Reviewing && ReviewState.Context is not null
+        ? $"PR #{ReviewState.Reference?.PullRequestNumber} · {ReviewState.Context.Title} — CodeReviewAI"
         : "CodeReviewAI — Review a Pull Request")
 </PageTitle>
 
@@ -154,8 +155,32 @@ else
     // ── Lifecycle ──────────────────────────────────────────────────
     protected override void OnInitialized()
     {
-        if (ReviewState.Context is not null)
+        ReviewState.OnChange += OnReviewStateChanged;
+
+        // Restore Reviewing state if a tab is already active (e.g. after navigation).
+        if (ReviewState.ActiveIndex.HasValue)
             _state = PageState.Reviewing;
+    }
+
+    public void Dispose()
+    {
+        ReviewState.OnChange -= OnReviewStateChanged;
+    }
+
+    private void OnReviewStateChanged()
+    {
+        // User clicked a PR tab → switch to Reviewing.
+        if (ReviewState.ActiveIndex.HasValue)
+        {
+            _state = PageState.Reviewing;
+        }
+        // User clicked the Search tab while reviewing → return to the input form.
+        else if (_state == PageState.Reviewing)
+        {
+            _state = PageState.Input;
+        }
+
+        StateHasChanged();
     }
 
     // ── Form handlers ──────────────────────────────────────────────
@@ -182,7 +207,8 @@ else
             var ctx = await GitHubService.GetPullRequestContextAsync(
                 _parsed.Owner, _parsed.Repo, _parsed.PullRequestNumber!.Value);
 
-            ReviewState.SetReview(ctx, _parsed);
+            // Add as a new sidebar tab (or activate existing one).
+            ReviewState.AddSession(ctx, _parsed);
             _state = PageState.Reviewing;
         }
         catch (Exception ex)
