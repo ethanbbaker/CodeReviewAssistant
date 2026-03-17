@@ -10,12 +10,15 @@
 @rendermode InteractiveServer
 
 <PageTitle>
-    @(_state == PageState.Reviewing && ReviewState.Context is not null
+    @(ReviewState.ActiveIndex.HasValue && ReviewState.Context is not null
         ? $"PR #{ReviewState.Reference?.PullRequestNumber} · {ReviewState.Context.Title} — CodeReviewAI"
         : "CodeReviewAI — Review a Pull Request")
 </PageTitle>
 
-@if (_state == PageState.Reviewing && ReviewState.Context is not null && ReviewState.Reference is not null)
+@* Show the diff viewer when a PR tab is active; otherwise show the search form. *@
+@if (ReviewState.ActiveIndex.HasValue
+     && ReviewState.Context  is not null
+     && ReviewState.Reference is not null)
 {
     <DiffViewer Context="ReviewState.Context" Reference="ReviewState.Reference" />
 }
@@ -27,7 +30,7 @@ else
             <!-- Hero -->
             <div class="pr-hero">
                 <img src="robot-logo.svg" alt="Robot logo"
-                     class="pr-hero-icon @(_state == PageState.Loading ? "hero-pulse" : "")" />
+                     class="pr-hero-icon @(_formState == FormState.Loading ? "hero-pulse" : "")" />
                 <div>
                     <h1 class="mb-0 fs-3 fw-bold">Review a Pull Request</h1>
                     <p class="text-muted mb-0 mt-1" style="font-size:0.88rem;">
@@ -51,7 +54,7 @@ else
                                placeholder="https://github.com/owner/repo/pull/123"
                                autocomplete="off"
                                spellcheck="false"
-                               disabled="@(_state == PageState.Loading)" />
+                               disabled="@(_formState == FormState.Loading)" />
 
                     @if (_parsed is not null)
                     {
@@ -87,7 +90,7 @@ else
                 </div>
 
                 <!-- Analyze / loading button -->
-                @if (_state == PageState.Loading)
+                @if (_formState == FormState.Loading)
                 {
                     <button type="button" class="btn btn-primary btn-lg w-100" disabled>
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -108,7 +111,7 @@ else
             </EditForm>
 
             <!-- Error state -->
-            @if (_state == PageState.Error && _errorMessage is not null)
+            @if (_formState == FormState.Error && _errorMessage is not null)
             {
                 <div class="error-card mt-4">
                     <div class="error-icon">
@@ -132,12 +135,12 @@ else
 }
 
 @code {
-    // ── State machine ──────────────────────────────────────────────
-    private enum PageState { Input, Loading, Reviewing, Error }
+    // ── Form-only state machine (Reviewing is gone — driven by ReviewState.ActiveIndex) ──
+    private enum FormState { Input, Loading, Error }
 
-    private PageState  _state        = PageState.Input;
-    private string?    _errorMessage;
-    private string?    _errorDetail;
+    private FormState _formState    = FormState.Input;
+    private string?   _errorMessage;
+    private string?   _errorDetail;
 
     // ── Form ───────────────────────────────────────────────────────
     private readonly PrInputModel _model = new();
@@ -150,16 +153,12 @@ else
             ? (_parsed is not null ? "is-valid" : "is-invalid")
             : string.Empty;
 
-    private bool CanSubmit => _parsed?.IsPullRequest == true && _state == PageState.Input;
+    private bool CanSubmit => _parsed?.IsPullRequest == true && _formState == FormState.Input;
 
     // ── Lifecycle ──────────────────────────────────────────────────
     protected override void OnInitialized()
     {
         ReviewState.OnChange += OnReviewStateChanged;
-
-        // Restore Reviewing state if a tab is already active (e.g. after navigation).
-        if (ReviewState.ActiveIndex.HasValue)
-            _state = PageState.Reviewing;
     }
 
     public void Dispose()
@@ -167,18 +166,13 @@ else
         ReviewState.OnChange -= OnReviewStateChanged;
     }
 
+    // When any tab switch happens just re-render; the template condition on
+    // ReviewState.ActiveIndex is the single source of truth for what to show.
     private void OnReviewStateChanged()
     {
-        // User clicked a PR tab → switch to Reviewing.
-        if (ReviewState.ActiveIndex.HasValue)
-        {
-            _state = PageState.Reviewing;
-        }
-        // User clicked the Search tab while reviewing → return to the input form.
-        else if (_state == PageState.Reviewing)
-        {
-            _state = PageState.Input;
-        }
+        // If we were loading and the tab somehow disappeared, reset the form.
+        if (!ReviewState.ActiveIndex.HasValue && _formState == FormState.Loading)
+            _formState = FormState.Input;
 
         StateHasChanged();
     }
@@ -187,7 +181,7 @@ else
     private void OnUrlInput(ChangeEventArgs e)
     {
         _model.Url      = e.Value?.ToString() ?? string.Empty;
-        _state          = PageState.Input;
+        _formState      = FormState.Input;
         _errorMessage   = null;
         _showValidation = !string.IsNullOrWhiteSpace(_model.Url);
         _parsed         = GitHubUrlParser.TryParse(_model.Url);
@@ -198,7 +192,7 @@ else
         _parsed = GitHubUrlParser.TryParse(_model.Url);
         if (_parsed?.IsPullRequest != true) return;
 
-        _state        = PageState.Loading;
+        _formState    = FormState.Loading;
         _errorMessage = null;
         _errorDetail  = null;
 
@@ -207,13 +201,12 @@ else
             var ctx = await GitHubService.GetPullRequestContextAsync(
                 _parsed.Owner, _parsed.Repo, _parsed.PullRequestNumber!.Value);
 
-            // Add as a new sidebar tab (or activate existing one).
+            // Adds a sidebar tab and sets ActiveIndex → template will show DiffViewer.
             ReviewState.AddSession(ctx, _parsed);
-            _state = PageState.Reviewing;
         }
         catch (Exception ex)
         {
-            _state        = PageState.Error;
+            _formState    = FormState.Error;
             _errorMessage = MapErrorMessage(ex);
             _errorDetail  = MapErrorDetail(ex);
         }
@@ -221,7 +214,7 @@ else
 
     private void Reset()
     {
-        _state        = PageState.Input;
+        _formState    = FormState.Input;
         _errorMessage = null;
         _errorDetail  = null;
     }
