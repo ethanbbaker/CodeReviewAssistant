@@ -239,3 +239,114 @@ h1:focus { outline: none; }
                  SFMono-Regular, Menlo, Consolas, monospace !important;
     font-size: 0.9rem !important;
 }
+
+/* ── Diff line syntax highlighting (global — used by FileDiffCard) ── */
+.diff-line {
+    display: flex;
+    min-width: 0;
+    white-space: pre;
+    padding: 0 0.6rem;
+    border-left: 3px solid transparent;
+}
+.diff-line:hover { filter: brightness(1.08); }
+
+.diff-gutter {
+    width: 1.1rem;
+    flex-shrink: 0;
+    user-select: none;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.72rem;
+    padding-right: 0.5rem;
+    text-align: right;
+}
+
+.diff-code {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.78rem;
+}
+
+.diff-add {
+    background: rgba(52, 211, 153, 0.08);
+    border-left-color: rgba(52, 211, 153, 0.5);
+}
+.diff-add .diff-gutter { color: #34d399; }
+.diff-add .diff-code   { color: #d1fae5; }
+
+.diff-del {
+    background: rgba(248, 113, 113, 0.09);
+    border-left-color: rgba(248, 113, 113, 0.5);
+}
+.diff-del .diff-gutter { color: #f87171; }
+.diff-del .diff-code   { color: #fee2e2; }
+
+.diff-hunk {
+    background: rgba(96, 165, 250, 0.06);
+    border-left-color: rgba(96, 165, 250, 0.35);
+}
+.diff-hunk .diff-gutter { color: #60a5fa; }
+.diff-hunk .diff-code   { color: #60a5fa; font-style: italic; font-size: 0.74rem; }
+
+.diff-ctx .diff-gutter { color: rgba(255,255,255,0.15); }
+.diff-ctx .diff-code   { color: #8b949e; }
+
+/* ── Hero pulse animation (loading) ── */
+.hero-pulse {
+    animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1;   transform: scale(1); }
+    50%       { opacity: 0.6; transform: scale(0.96); }
+}
+
+/* ── Bootstrap spinner colour override ── */
+.spinner-border {
+    border-color: rgba(255, 255, 255, 0.35);
+    border-right-color: white;
+}
+
+/* ── Error card ── */
+.error-card {
+    display: flex;
+    gap: 0.85rem;
+    background: rgba(248, 113, 113, 0.07);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+}
+
+.error-icon {
+    flex-shrink: 0;
+    color: #f87171;
+    margin-top: 1px;
+}
+.error-icon svg { width: 18px; height: 18px; }
+
+.error-body { flex: 1; min-width: 0; }
+
+.error-message {
+    margin: 0 0 0.3rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fca5a5;
+}
+
+.error-detail {
+    margin: 0 0 0.65rem;
+    font-size: 0.8rem;
+    color: #8b949e;
+}
+
+.btn-retry {
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: #f87171;
+    border-radius: 6px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.btn-retry:hover { background: rgba(248, 113, 113, 0.2); }

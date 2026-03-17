@@ -1,130 +1,226 @@
 @page "/"
 @using CodeReviewAssistant.Core.Models
 @using CodeReviewAssistant.Core.Parsing
+@using CodeReviewAssistant.Core.Exceptions
+@using CodeReviewAssistant.Components.Services
+@using Octokit
+@inject IGitHubService       GitHubService
+@inject IReviewStateService  ReviewState
 @rendermode InteractiveServer
 
-<PageTitle>CodeReviewAI — Review a Pull Request</PageTitle>
+<PageTitle>
+    @(_state == PageState.Reviewing
+        ? $"PR #{ReviewState.Reference?.PullRequestNumber} · {ReviewState.Context?.Title} — CodeReviewAI"
+        : "CodeReviewAI — Review a Pull Request")
+</PageTitle>
 
-<div class="container py-5" style="max-width: 700px;">
+@if (_state == PageState.Reviewing && ReviewState.Context is not null && ReviewState.Reference is not null)
+{
+    <DiffViewer Context="ReviewState.Context" Reference="ReviewState.Reference" />
+}
+else
+{
+    <div class="container py-5" style="max-width: 700px;">
+        <div class="pr-card">
 
-    <div class="pr-card">
-        <!-- Hero header -->
-        <div class="pr-hero">
-            <img src="robot-logo.svg" alt="Robot logo" class="pr-hero-icon" />
-            <div>
-                <h1 class="mb-0 fs-3 fw-bold">Review a Pull Request</h1>
-                <p class="text-muted mb-0 mt-1" style="font-size:0.88rem;">
-                    Paste a GitHub PR URL and let AI analyse the diff for you.
-                </p>
-            </div>
-        </div>
-
-        <hr style="border-color: var(--cra-border); margin: 1.25rem 0;" />
-
-        <EditForm Model="@_model" OnValidSubmit="HandleSubmit" FormName="pr-form">
-            <DataAnnotationsValidator />
-
-            <div class="mb-4">
-                <label for="prUrl" class="form-label">GitHub PR URL</label>
-                <InputText id="prUrl"
-                           class="@($"form-control form-control-lg font-mono {UrlInputCssClass}")"
-                           @bind-Value="_model.Url"
-                           @oninput="OnUrlInput"
-                           placeholder="https://github.com/owner/repo/pull/123"
-                           autocomplete="off"
-                           spellcheck="false" />
-
-                @if (_parsed is not null)
-                {
-                    <div class="form-text text-success mt-2 d-flex flex-wrap gap-3">
-                        <span>
-                            <svg class="inline-icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/>
-                            </svg>
-                            <strong>@_parsed.Owner</strong> / <strong>@_parsed.Repo</strong>
-                        </span>
-                        @if (_parsed.IsPullRequest)
-                        {
-                            <span class="badge-pr">PR&nbsp;#@_parsed.PullRequestNumber</span>
-                        }
-                        else
-                        {
-                            <span class="text-warning">
-                                &#9432; Repository URL — full-repo review coming soon.
-                            </span>
-                        }
-                    </div>
-                }
-                else if (_showValidation && !string.IsNullOrWhiteSpace(_model.Url))
-                {
-                    <div class="form-text text-danger mt-2">
-                        <svg class="inline-icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v4a.75.75 0 01-1.5 0v-4zm.75 8a1 1 0 110-2 1 1 0 010 2z"/>
-                        </svg>
-                        Not a valid GitHub PR URL. Expected:&nbsp;
-                        <code>github.com/owner/repo/pull/123</code>
-                    </div>
-                }
-
-                <ValidationMessage For="@(() => _model.Url)" class="text-danger small mt-1" />
-            </div>
-
-            <button type="submit"
-                    class="btn btn-primary btn-lg w-100"
-                    disabled="@(!CanSubmit)">
-                <svg class="inline-icon me-1" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.78 7.22l-4.5 4.5a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L6.75 10.19l3.97-3.97a.75.75 0 111.06 1.06z"/>
-                </svg>
-                Start Review
-            </button>
-        </EditForm>
-
-        @if (_submitted && _parsed?.IsPullRequest == true)
-        {
-            <div class="alert alert-info mt-4 mb-0">
-                <div class="d-flex gap-2 align-items-start">
-                    <svg style="width:18px;height:18px;flex-shrink:0;margin-top:1px;" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm.75 4.75a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0v-3.5zm-.75 7a1 1 0 110-2 1 1 0 010 2z"/>
-                    </svg>
-                    <div>
-                        <strong>Ready to review</strong>
-                        <a class="d-block mt-1" href="@_parsed.ToString()" target="_blank" rel="noopener noreferrer">@_parsed</a>
-                        <small class="text-muted d-block mt-1">AI review integration coming in the next phase.</small>
-                    </div>
+            <!-- Hero -->
+            <div class="pr-hero">
+                <img src="robot-logo.svg" alt="Robot logo"
+                     class="pr-hero-icon @(_state == PageState.Loading ? "hero-pulse" : "")" />
+                <div>
+                    <h1 class="mb-0 fs-3 fw-bold">Review a Pull Request</h1>
+                    <p class="text-muted mb-0 mt-1" style="font-size:0.88rem;">
+                        Paste a GitHub PR URL and let AI analyse the diff for you.
+                    </p>
                 </div>
             </div>
-        }
+
+            <hr style="border-color: var(--cra-border); margin: 1.25rem 0;" />
+
+            <!-- Input form -->
+            <EditForm Model="@_model" OnValidSubmit="HandleSubmit" FormName="pr-form">
+                <DataAnnotationsValidator />
+
+                <div class="mb-4">
+                    <label for="prUrl" class="form-label">GitHub PR URL</label>
+                    <InputText id="prUrl"
+                               class="@($"form-control form-control-lg font-mono {UrlInputCssClass}")"
+                               @bind-Value="_model.Url"
+                               @oninput="OnUrlInput"
+                               placeholder="https://github.com/owner/repo/pull/123"
+                               autocomplete="off"
+                               spellcheck="false"
+                               disabled="@(_state == PageState.Loading)" />
+
+                    @if (_parsed is not null)
+                    {
+                        <div class="form-text text-success mt-2 d-flex flex-wrap gap-3">
+                            <span>
+                                <svg class="inline-icon" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/>
+                                </svg>
+                                <strong>@_parsed.Owner</strong> / <strong>@_parsed.Repo</strong>
+                            </span>
+                            @if (_parsed.IsPullRequest)
+                            {
+                                <span class="badge-pr">PR&nbsp;#@_parsed.PullRequestNumber</span>
+                            }
+                            else
+                            {
+                                <span class="text-warning">&#9432; Repository URL — full-repo review coming soon.</span>
+                            }
+                        </div>
+                    }
+                    else if (_showValidation && !string.IsNullOrWhiteSpace(_model.Url))
+                    {
+                        <div class="form-text text-danger mt-2">
+                            <svg class="inline-icon" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v4a.75.75 0 01-1.5 0v-4zm.75 8a1 1 0 110-2 1 1 0 010 2z"/>
+                            </svg>
+                            Not a valid GitHub PR URL. Expected:&nbsp;
+                            <code>github.com/owner/repo/pull/123</code>
+                        </div>
+                    }
+
+                    <ValidationMessage For="@(() => _model.Url)" class="text-danger small mt-1" />
+                </div>
+
+                <!-- Analyze / loading button -->
+                @if (_state == PageState.Loading)
+                {
+                    <button type="button" class="btn btn-primary btn-lg w-100" disabled>
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Fetching PR&hellip;
+                    </button>
+                }
+                else
+                {
+                    <button type="submit"
+                            class="btn btn-primary btn-lg w-100"
+                            disabled="@(!CanSubmit)">
+                        <svg class="inline-icon me-1" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M10.97 4.97a.75.75 0 011.07 1.05l-3.99 4.99a.75.75 0 01-1.08.02L4.324 8.384a.75.75 0 111.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 01.02-.022z"/>
+                        </svg>
+                        Analyze PR
+                    </button>
+                }
+            </EditForm>
+
+            <!-- Error state -->
+            @if (_state == PageState.Error && _errorMessage is not null)
+            {
+                <div class="error-card mt-4">
+                    <div class="error-icon">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v4a.75.75 0 01-1.5 0v-4zm.75 8a1 1 0 110-2 1 1 0 010 2z"/>
+                        </svg>
+                    </div>
+                    <div class="error-body">
+                        <p class="error-message">@_errorMessage</p>
+                        @if (_errorDetail is not null)
+                        {
+                            <p class="error-detail">@_errorDetail</p>
+                        }
+                        <button class="btn-retry" @onclick="Reset">Try again</button>
+                    </div>
+                </div>
+            }
+
+        </div>
     </div>
-</div>
+}
 
 @code {
-    private readonly PrInputModel _model = new();
-    private GitHubPrReference? _parsed;
-    private bool _showValidation;
-    private bool _submitted;
+    // ── State machine ──────────────────────────────────────────────
+    private enum PageState { Input, Loading, Reviewing, Error }
 
+    private PageState  _state        = PageState.Input;
+    private string?    _errorMessage;
+    private string?    _errorDetail;
+
+    // ── Form ───────────────────────────────────────────────────────
+    private readonly PrInputModel _model = new();
+    private GitHubPrReference?    _parsed;
+    private bool                  _showValidation;
+
+    // ── Derived ────────────────────────────────────────────────────
     private string UrlInputCssClass =>
         _showValidation && !string.IsNullOrWhiteSpace(_model.Url)
             ? (_parsed is not null ? "is-valid" : "is-invalid")
             : string.Empty;
 
-    private bool CanSubmit => _parsed?.IsPullRequest == true;
+    private bool CanSubmit => _parsed?.IsPullRequest == true && _state == PageState.Input;
 
+    // ── Lifecycle ──────────────────────────────────────────────────
+    protected override void OnInitialized()
+    {
+        if (ReviewState.Context is not null)
+            _state = PageState.Reviewing;
+    }
+
+    // ── Form handlers ──────────────────────────────────────────────
     private void OnUrlInput(ChangeEventArgs e)
     {
-        _model.Url = e.Value?.ToString() ?? string.Empty;
-        _submitted = false;
+        _model.Url      = e.Value?.ToString() ?? string.Empty;
+        _state          = PageState.Input;
+        _errorMessage   = null;
         _showValidation = !string.IsNullOrWhiteSpace(_model.Url);
-        _parsed = GitHubUrlParser.TryParse(_model.Url);
+        _parsed         = GitHubUrlParser.TryParse(_model.Url);
     }
 
-    private void HandleSubmit()
+    private async Task HandleSubmit()
     {
         _parsed = GitHubUrlParser.TryParse(_model.Url);
-        if (_parsed?.IsPullRequest == true)
-            _submitted = true;
+        if (_parsed?.IsPullRequest != true) return;
+
+        _state        = PageState.Loading;
+        _errorMessage = null;
+        _errorDetail  = null;
+
+        try
+        {
+            var ctx = await GitHubService.GetPullRequestContextAsync(
+                _parsed.Owner, _parsed.Repo, _parsed.PullRequestNumber!.Value);
+
+            ReviewState.SetReview(ctx, _parsed);
+            _state = PageState.Reviewing;
+        }
+        catch (Exception ex)
+        {
+            _state        = PageState.Error;
+            _errorMessage = MapErrorMessage(ex);
+            _errorDetail  = MapErrorDetail(ex);
+        }
     }
 
+    private void Reset()
+    {
+        _state        = PageState.Input;
+        _errorMessage = null;
+        _errorDetail  = null;
+    }
+
+    // ── Error mapping ──────────────────────────────────────────────
+    private static string MapErrorMessage(Exception ex) => ex switch
+    {
+        GitHubRateLimitException rle => rle.ResetAt.HasValue
+            ? $"GitHub API rate limit exceeded. Resets at {rle.ResetAt:HH:mm} UTC."
+            : "GitHub API rate limit exceeded. Please try again later.",
+        NotFoundException      => "Pull request not found. Double-check the URL.",
+        AuthorizationException => "Access denied. This repository may be private.",
+        ForbiddenException     => "Access forbidden. Check your GitHub token permissions.",
+        _                      => "Something went wrong fetching this pull request."
+    };
+
+    private static string? MapErrorDetail(Exception ex) => ex switch
+    {
+        NotFoundException      => "Ensure the repository is public and the PR number is correct.",
+        AuthorizationException => "Add a GitHub personal access token in appsettings to access private repos.",
+        ForbiddenException     => "Your token needs repo:read scope to access this resource.",
+        _                      => ex.Message is { Length: < 200 } m ? m : null
+    };
+
+    // ── Form model ─────────────────────────────────────────────────
     private sealed class PrInputModel
     {
         public string Url { get; set; } = string.Empty;

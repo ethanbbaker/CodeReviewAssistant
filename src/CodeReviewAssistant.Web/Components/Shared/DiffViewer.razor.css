@@ -1,0 +1,122 @@
+/* ── Outer wrapper ── */
+.diff-viewer {
+    padding-bottom: 3rem;
+}
+
+/* ── PR header card ── */
+.pr-header {
+    background: var(--cra-surface, #13111f);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.pr-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.pr-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 0;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.pr-gh-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #7c3aed;
+    text-decoration: none;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+.pr-gh-link svg { width: 14px; height: 14px; }
+.pr-gh-link:hover {
+    background: rgba(124, 58, 237, 0.12);
+    color: #a78bfa;
+    text-decoration: none;
+}
+
+/* ── Meta row ── */
+.pr-meta-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.pr-branch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 0.25rem;
+}
+.pr-branch svg { width: 12px; height: 12px; color: #8b949e; flex-shrink: 0; }
+
+.branch-chip {
+    background: rgba(96, 165, 250, 0.1);
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    color: #93c5fd;
+    border-radius: 5px;
+    padding: 0.15em 0.5em;
+    font-size: 0.74rem;
+    font-family: ui-monospace, monospace;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.branch-chip.head {
+    background: rgba(124, 58, 237, 0.1);
+    border-color: rgba(124, 58, 237, 0.25);
+    color: #c4b5fd;
+}
+
+.pr-stat-pill {
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 0.2em 0.55em;
+    border-radius: 12px;
+    letter-spacing: 0.2px;
+}
+.pr-stat-pill.add     { background: rgba(52, 211, 153, 0.12); color: #34d399; }
+.pr-stat-pill.del     { background: rgba(248, 113, 113, 0.12); color: #f87171; }
+.pr-stat-pill.neutral { background: rgba(139, 148, 158, 0.12); color: #8b949e; }
+.pr-stat-pill.warn    { background: rgba(251, 191, 36, 0.1);   color: #fbbf24; }
+
+/* ── Description ── */
+.pr-description {
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(124, 58, 237, 0.1);
+}
+.pr-description summary {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #7c3aed;
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: 0.2px;
+}
+.pr-description p {
+    margin-top: 0.5rem;
+    font-size: 0.83rem;
+    color: #8b949e;
+    white-space: pre-wrap;
+    line-height: 1.6;
+}

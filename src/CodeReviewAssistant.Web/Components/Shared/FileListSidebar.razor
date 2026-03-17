@@ -1,0 +1,94 @@
+@inject IReviewStateService ReviewState
+
+<!-- Brand row -->
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid align-items-center gap-2">
+        <img src="robot-logo.svg" alt="CodeReviewAI logo" class="brand-logo" />
+        <a class="navbar-brand" href="/">CodeReview<span class="brand-accent">AI</span></a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable">
+    <!-- Back / new review button -->
+    <div class="px-3 pt-3 pb-2">
+        <button class="btn btn-back w-100" @onclick="ReviewState.ClearReview">
+            <svg class="inline-icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 010 .708L5.707 8l5.647 5.646a.5.5 0 01-.708.708l-6-6a.5.5 0 010-.708l6-6a.5.5 0 01.708 0z"/>
+            </svg>
+            New Review
+        </button>
+    </div>
+
+    <!-- PR title + meta -->
+    @if (ReviewState.Context is { } ctx && ReviewState.Reference is { } rf)
+    {
+        <div class="pr-meta px-3 pb-2">
+            <a class="pr-meta-link"
+               href="@rf.ToString()"
+               target="_blank" rel="noopener noreferrer"
+               title="@ctx.Title">
+                PR&nbsp;#@rf.PullRequestNumber
+            </a>
+            <p class="pr-meta-title" title="@ctx.Title">@ctx.Title</p>
+            <span class="branch-badge">@ctx.BaseBranch</span>
+            <svg style="width:10px;height:10px;opacity:.5;flex-shrink:0;" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M6 3.5a.5.5 0 01.5-.5h8a.5.5 0 01.5.5v9a.5.5 0 01-.5.5h-8a.5.5 0 01-.5-.5v-2a.5.5 0 011 0V12H14V4H6.5v1.5a.5.5 0 01-1 0v-2z"/>
+                <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 010-.708l3-3a.5.5 0 11.708.708L1.707 7.5H10.5a.5.5 0 010 1H1.707l2.147 2.146a.5.5 0 01-.708.708l-3-3z"/>
+            </svg>
+            <span class="branch-badge">@ctx.HeadBranch</span>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="stats-bar px-3 pb-2">
+            <span class="stat-add">+@ctx.TotalAdditions</span>
+            <span class="stat-del">-@ctx.TotalDeletions</span>
+            <span class="stat-files">@ctx.Files.Count file@(ctx.Files.Count == 1 ? "" : "s")</span>
+        </div>
+
+        <hr class="sidebar-divider" />
+
+        <!-- File list -->
+        <nav class="file-nav px-2 pb-3">
+            @for (int i = 0; i < ctx.Files.Count; i++)
+            {
+                var file = ctx.Files[i];
+                var anchor = $"file-{i}";
+                <a class="file-item" href="#@anchor" title="@file.FileName">
+                    <span class="@GetStatusDot(file.Status)" aria-hidden="true"></span>
+                    <span class="file-name">@GetShortName(file.FileName)</span>
+                    @if (!file.IsBinary)
+                    {
+                        <span class="file-stats">
+                            <span class="stat-add-sm">+@file.Additions</span>
+                            <span class="stat-del-sm">-@file.Deletions</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge-binary">bin</span>
+                    }
+                </a>
+            }
+        </nav>
+    }
+</div>
+
+@code {
+    private static string GetStatusDot(DiffStatus status) => status switch
+    {
+        DiffStatus.Added    => "status-dot dot-add",
+        DiffStatus.Deleted  => "status-dot dot-del",
+        DiffStatus.Renamed  => "status-dot dot-rename",
+        DiffStatus.Copied   => "status-dot dot-rename",
+        DiffStatus.Binary   => "status-dot dot-binary",
+        _                   => "status-dot dot-mod"
+    };
+
+    private static string GetShortName(string path)
+    {
+        var slash = path.LastIndexOf('/');
+        return slash >= 0 ? path[(slash + 1)..] : path;
+    }
+}

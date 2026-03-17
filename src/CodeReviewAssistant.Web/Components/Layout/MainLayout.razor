@@ -1,8 +1,17 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@inject IReviewStateService ReviewState
+@implements IDisposable
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+        @if (ReviewState.Context is not null)
+        {
+            <FileListSidebar />
+        }
+        else
+        {
+            <NavMenu />
+        }
     </div>
 
     <main>
@@ -21,3 +30,15 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ReviewState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ReviewState.OnChange -= StateHasChanged;
+    }
+}
