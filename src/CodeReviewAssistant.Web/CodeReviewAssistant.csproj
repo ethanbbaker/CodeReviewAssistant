@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\CodeReviewAssistant.Core\CodeReviewAssistant.Core.csproj" />
+    <ProjectReference Include="..\CodeReviewAssistant.Infrastructure\CodeReviewAssistant.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <UserSecretsId>6100d58b-7893-4212-90b6-73114f831db2</UserSecretsId>
+  </PropertyGroup>
+
+</Project>

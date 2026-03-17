@@ -1,0 +1,37 @@
+@inherits LayoutComponentBase
+@inject IReviewStateService ReviewState
+@implements IDisposable
+
+<div class="page">
+    <div class="sidebar">
+        <FileListSidebar />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <span class="app-tagline">AI-powered pull request reviews</span>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ReviewState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ReviewState.OnChange -= StateHasChanged;
+    }
+}

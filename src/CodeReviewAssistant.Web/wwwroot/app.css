@@ -1,0 +1,352 @@
+/* ── Dark theme base ── */
+:root {
+    --cra-bg:           #0b0a14;
+    --cra-surface:      #13111f;
+    --cra-surface-2:    #1a1730;
+    --cra-border:       rgba(124, 58, 237, 0.18);
+    --cra-border-subtle: rgba(255, 255, 255, 0.06);
+    --cra-text:         #e2e8f0;
+    --cra-text-muted:   #7b8490;
+    --cra-accent:       #7c3aed;
+    --cra-accent-light: #a78bfa;
+    --cra-cyan:         #06b6d4;
+    --cra-success:      #34d399;
+    --cra-danger:       #f87171;
+    --cra-warning:      #fbbf24;
+}
+
+html, body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--cra-bg);
+    color: var(--cra-text);
+    height: 100%;
+}
+
+/* ── Links ── */
+a, .btn-link {
+    color: var(--cra-accent-light);
+    text-decoration: none;
+}
+
+a:hover, .btn-link:hover {
+    color: var(--cra-cyan);
+    text-decoration: underline;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+    background: linear-gradient(135deg, var(--cra-accent) 0%, #6d28d9 100%);
+    border-color: var(--cra-accent);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.35);
+    transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #6d28d9 0%, var(--cra-accent) 100%);
+    border-color: var(--cra-accent-light);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    background: #2d2b3d;
+    border-color: #3d3b50;
+    color: var(--cra-text-muted);
+    box-shadow: none;
+}
+
+/* ── Focus rings ── */
+.btn:focus,
+.btn:active:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.15rem rgba(124, 58, 237, 0.45);
+    outline: none;
+}
+
+/* ── Form controls – dark override ── */
+.form-control {
+    background-color: var(--cra-surface-2) !important;
+    border-color: rgba(124, 58, 237, 0.25) !important;
+    color: var(--cra-text) !important;
+    border-radius: 8px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-control::placeholder {
+    color: var(--cra-text-muted) !important;
+}
+
+.form-control:focus {
+    border-color: var(--cra-accent) !important;
+    background-color: var(--cra-surface-2) !important;
+    color: var(--cra-text) !important;
+}
+
+.form-control.is-valid {
+    border-color: var(--cra-success) !important;
+    box-shadow: 0 0 0 0.15rem rgba(52, 211, 153, 0.25) !important;
+    background-image: none !important;
+}
+
+.form-control.is-invalid {
+    border-color: var(--cra-danger) !important;
+    box-shadow: 0 0 0 0.15rem rgba(248, 113, 113, 0.2) !important;
+    background-image: none !important;
+}
+
+/* ── Labels & form text ── */
+.form-label {
+    color: var(--cra-text);
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: 0.2px;
+}
+
+.form-text {
+    font-size: 0.8rem;
+}
+
+.text-success { color: var(--cra-success) !important; }
+.text-danger  { color: var(--cra-danger)  !important; }
+.text-muted   { color: var(--cra-text-muted) !important; }
+.text-warning { color: var(--cra-warning) !important; }
+
+/* ── Alert ── */
+.alert-info {
+    background-color: rgba(6, 182, 212, 0.1) !important;
+    border-color: rgba(6, 182, 212, 0.3) !important;
+    color: #67e8f9 !important;
+    border-radius: 10px;
+}
+
+.alert-info a {
+    color: var(--cra-cyan);
+    font-weight: 500;
+}
+
+/* ── Code ── */
+code {
+    background: rgba(124, 58, 237, 0.12);
+    color: var(--cra-accent-light);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+/* ── Page content area ── */
+.content {
+    padding-top: 1.25rem;
+}
+
+h1 { color: var(--cra-text); }
+h1:focus { outline: none; }
+
+/* ── PR review card wrapper ── */
+.pr-card {
+    background: var(--cra-surface);
+    border: 1px solid var(--cra-border);
+    border-radius: 14px;
+    padding: 2rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(124, 58, 237, 0.08);
+}
+
+.pr-hero {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.pr-hero-icon {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.5));
+}
+
+/* ── Validation states (Blazor) ── */
+.valid.modified:not([type=checkbox]) {
+    outline: none;
+}
+
+.invalid {
+    outline: none;
+}
+
+.validation-message {
+    color: var(--cra-danger);
+    font-size: 0.8rem;
+}
+
+/* ── Blazor error boundary ── */
+.blazor-error-boundary {
+    background: #1a0a0a;
+    border: 1px solid #7f1d1d;
+    border-radius: 8px;
+    padding: 1rem 1rem 1rem 3.5rem;
+    color: #fca5a5;
+    position: relative;
+}
+
+.blazor-error-boundary::before {
+    content: "⚠";
+    position: absolute;
+    left: 1rem;
+    font-size: 1.5rem;
+    color: #f87171;
+}
+
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--cra-bg); }
+::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cra-accent); }
+
+/* ── Inline SVG icon ── */
+.inline-icon {
+    width: 14px;
+    height: 14px;
+    vertical-align: -0.15em;
+    margin-right: 0.25rem;
+    flex-shrink: 0;
+}
+
+/* ── PR number badge ── */
+.badge-pr {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(124, 58, 237, 0.18);
+    color: var(--cra-accent-light);
+    border: 1px solid rgba(124, 58, 237, 0.35);
+    border-radius: 20px;
+    padding: 0.15em 0.65em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+/* ── Monospace input ── */
+.font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace,
+                 SFMono-Regular, Menlo, Consolas, monospace !important;
+    font-size: 0.9rem !important;
+}
+
+/* ── Diff line syntax highlighting (global — used by FileDiffCard) ── */
+.diff-line {
+    display: flex;
+    min-width: 0;
+    white-space: pre;
+    padding: 0 0.6rem;
+    border-left: 3px solid transparent;
+}
+.diff-line:hover { filter: brightness(1.08); }
+
+.diff-gutter {
+    width: 1.1rem;
+    flex-shrink: 0;
+    user-select: none;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.72rem;
+    padding-right: 0.5rem;
+    text-align: right;
+}
+
+.diff-code {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.78rem;
+}
+
+.diff-add {
+    background: rgba(52, 211, 153, 0.08);
+    border-left-color: rgba(52, 211, 153, 0.5);
+}
+.diff-add .diff-gutter { color: #34d399; }
+.diff-add .diff-code   { color: #d1fae5; }
+
+.diff-del {
+    background: rgba(248, 113, 113, 0.09);
+    border-left-color: rgba(248, 113, 113, 0.5);
+}
+.diff-del .diff-gutter { color: #f87171; }
+.diff-del .diff-code   { color: #fee2e2; }
+
+.diff-hunk {
+    background: rgba(96, 165, 250, 0.06);
+    border-left-color: rgba(96, 165, 250, 0.35);
+}
+.diff-hunk .diff-gutter { color: #60a5fa; }
+.diff-hunk .diff-code   { color: #60a5fa; font-style: italic; font-size: 0.74rem; }
+
+.diff-ctx .diff-gutter { color: rgba(255,255,255,0.15); }
+.diff-ctx .diff-code   { color: #8b949e; }
+
+/* ── Hero pulse animation (loading) ── */
+.hero-pulse {
+    animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1;   transform: scale(1); }
+    50%       { opacity: 0.6; transform: scale(0.96); }
+}
+
+/* ── Bootstrap spinner colour override ── */
+.spinner-border {
+    border-color: rgba(255, 255, 255, 0.35);
+    border-right-color: white;
+}
+
+/* ── Error card ── */
+.error-card {
+    display: flex;
+    gap: 0.85rem;
+    background: rgba(248, 113, 113, 0.07);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+}
+
+.error-icon {
+    flex-shrink: 0;
+    color: #f87171;
+    margin-top: 1px;
+}
+.error-icon svg { width: 18px; height: 18px; }
+
+.error-body { flex: 1; min-width: 0; }
+
+.error-message {
+    margin: 0 0 0.3rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fca5a5;
+}
+
+.error-detail {
+    margin: 0 0 0.65rem;
+    font-size: 0.8rem;
+    color: #8b949e;
+}
+
+.btn-retry {
+    background: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: #f87171;
+    border-radius: 6px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.btn-retry:hover { background: rgba(248, 113, 113, 0.2); }
