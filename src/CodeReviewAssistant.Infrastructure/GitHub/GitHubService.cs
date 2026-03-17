@@ -1,6 +1,7 @@
 using CodeReviewAssistant.Core.Exceptions;
 using CodeReviewAssistant.Core.Interfaces;
 using CodeReviewAssistant.Core.Models;
+using CodeReviewAssistant.Core.Parsing;
 using Octokit;
 using PullRequestFile = CodeReviewAssistant.Core.Models.PullRequestFile;
 using RepositoryInfo  = CodeReviewAssistant.Core.Models.RepositoryInfo;
@@ -109,6 +110,57 @@ public class GitHubService : IGitHubService
                 StargazersCount = repository.StargazersCount,
                 ForksCount     = repository.ForksCount
             };
+        }
+        catch (RateLimitExceededException ex)
+        {
+            throw new GitHubRateLimitException(ex.Reset);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<PullRequestContext> GetPullRequestContextAsync(
+        string owner, string repo, int prNumber)
+    {
+        try
+        {
+            // Fetch PR metadata and file list concurrently to minimise latency.
+            var prTask    = _client.PullRequest.Get(owner, repo, prNumber);
+            var filesTask = _client.PullRequest.Files(owner, repo, prNumber);
+
+            await Task.WhenAll(prTask, filesTask);
+
+            var pr    = await prTask;
+            var files = await filesTask;
+
+            var prInfo = new PullRequestInfo
+            {
+                Number       = pr.Number,
+                Title        = pr.Title,
+                Body         = pr.Body ?? string.Empty,
+                State        = pr.State.StringValue,
+                Author       = pr.User?.Login ?? string.Empty,
+                CreatedAt    = pr.CreatedAt,
+                MergedAt     = pr.MergedAt,
+                BaseRef      = pr.Base?.Ref ?? string.Empty,
+                HeadRef      = pr.Head?.Ref ?? string.Empty,
+                Additions    = pr.Additions,
+                Deletions    = pr.Deletions,
+                ChangedFiles = pr.ChangedFiles,
+                IsMerged     = pr.Merged
+            };
+
+            var coreFiles = files.Select(f => new PullRequestFile
+            {
+                Filename         = f.FileName,
+                Status           = f.Status,
+                Additions        = f.Additions,
+                Deletions        = f.Deletions,
+                Changes          = f.Changes,
+                Patch            = f.Patch,
+                PreviousFilename = f.PreviousFileName
+            }).ToList();
+
+            return DiffParser.Parse(prInfo, coreFiles);
         }
         catch (RateLimitExceededException ex)
         {
