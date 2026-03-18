@@ -1,4 +1,5 @@
 @inject IReviewStateService ReviewState
+@inject IReviewCacheService ReviewCache
 @implements IDisposable
 
 <!-- Brand row -->
@@ -37,7 +38,7 @@
                 <svg class="tab-icon" viewBox="0 0 16 16" fill="currentColor">
                     <path fill-rule="evenodd" d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h4.5a.75.75 0 0 1 .75.75v1.372a2.25 2.25 0 1 0 1.5 0V9.25a2.25 2.25 0 0 0-2.25-2.25h-4.5A.75.75 0 0 1 5 6.25V5.372zm8.25 6.128a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/>
                 </svg>
-                <span class="tab-pr-label">PR&nbsp;#@session.Reference.PullRequestNumber</span>
+                <span class="tab-pr-label" title="@session.Context.Title">@TruncateTitle(session.Context.Title)</span>
                 <span class="tab-close"
                       @onclick:stopPropagation
                       @onclick="() => ReviewState.RemoveSession(idx)"
@@ -86,6 +87,30 @@
 
         <!-- File list -->
         <nav class="file-nav px-2 pb-3">
+            <!-- Review link pinned at top -->
+            @{
+                var reviewState = ReviewCache.GetOrCreate(rf);
+            }
+            @if (reviewState.HasContent || reviewState.Status == ReviewRunStatus.Running)
+            {
+                <a class="file-item sidebar-review-link" href="#review-panel" title="Jump to AI review">
+                    <svg class="@(reviewState.Status == ReviewRunStatus.Running ? "fj-review-spin" : "")"
+                         viewBox="0 0 16 16" fill="currentColor" width="11" height="11" style="flex-shrink:0;">
+                        <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34z"/>
+                    </svg>
+                    <span class="file-name">AI Review</span>
+                    @if (reviewState.Status == ReviewRunStatus.Running)
+                    {
+                        <span class="badge-binary" style="color:var(--cra-accent-light);border-color:rgba(124,58,237,.4);">live</span>
+                    }
+                    else if (reviewState.Status == ReviewRunStatus.Complete)
+                    {
+                        <span class="badge-binary" style="color:var(--cra-success);border-color:rgba(52,211,153,.35);">done</span>
+                    }
+                </a>
+                <hr class="sidebar-divider" style="margin:0.25rem 0;" />
+            }
+
             @for (int i = 0; i < ctx.Files.Count; i++)
             {
                 var file   = ctx.Files[i];
@@ -125,11 +150,13 @@
     protected override void OnInitialized()
     {
         ReviewState.OnChange += StateHasChanged;
+        ReviewCache.OnChange += StateHasChanged;
     }
 
     public void Dispose()
     {
         ReviewState.OnChange -= StateHasChanged;
+        ReviewCache.OnChange -= StateHasChanged;
     }
 
     private static string GetStatusDot(DiffStatus status) => status switch
@@ -141,6 +168,10 @@
         DiffStatus.Binary  => "status-dot dot-binary",
         _                  => "status-dot dot-mod"
     };
+
+    /// <summary>Truncates a PR title to fit the narrow sidebar tab without changing its size.</summary>
+    private static string TruncateTitle(string title) =>
+        title.Length <= 22 ? title : title[..19] + "…";
 
     private static string GetShortName(string path)
     {

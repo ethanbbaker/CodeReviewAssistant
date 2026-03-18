@@ -1,0 +1,88 @@
+@using Markdig
+
+<div class="review-panel" id="review-panel">
+
+    @switch (State.Status)
+    {
+        case ReviewRunStatus.Idle:
+            <div class="review-idle-hint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                </svg>
+                <span>Click <strong>Start Review</strong> above to run an AI code review on this pull request.</span>
+            </div>
+            break;
+
+        case ReviewRunStatus.Running:
+        case ReviewRunStatus.Complete:
+            <!-- Rendered markdown -->
+            <div class="review-body @(State.Status == ReviewRunStatus.Running ? "review-body-streaming" : "")">
+                @if (State.HasContent)
+                {
+                    @((MarkupString)Markdown.ToHtml(State.AccumulatedMarkdown, _mdPipeline))
+                }
+                else
+                {
+                    <!-- Skeleton while waiting for first token -->
+                    <div class="review-skeleton">
+                        <div class="skeleton-line skeleton-line-lg"></div>
+                        <div class="skeleton-line skeleton-line-md"></div>
+                        <div class="skeleton-line skeleton-line-sm"></div>
+                    </div>
+                }
+            </div>
+            break;
+
+        case ReviewRunStatus.Cancelled:
+            @if (State.HasContent)
+            {
+                <!-- Show partial review with a notice -->
+                <div class="review-cancelled-banner">
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                    Review was cancelled — partial output shown below.
+                </div>
+                <div class="review-body">
+                    @((MarkupString)Markdown.ToHtml(State.AccumulatedMarkdown, _mdPipeline))
+                </div>
+            }
+            else
+            {
+                <div class="review-idle-hint">
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                    <span>Review cancelled. Click <strong>Re-run</strong> above to start again.</span>
+                </div>
+            }
+            break;
+
+        case ReviewRunStatus.Error:
+            <div class="review-error">
+                <div class="review-error-icon">
+                    <svg viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v4a.75.75 0 01-1.5 0v-4zm.75 8a1 1 0 110-2 1 1 0 010 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="review-error-msg">Review failed</p>
+                    @if (State.ErrorMessage is not null)
+                    {
+                        <p class="review-error-detail">@State.ErrorMessage</p>
+                    }
+                </div>
+            </div>
+            break;
+    }
+
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ReviewSessionState State { get; set; } = null!;
+
+    private static readonly MarkdownPipeline _mdPipeline =
+        new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+}

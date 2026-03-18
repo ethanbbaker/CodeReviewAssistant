@@ -7,6 +7,8 @@
 
 main {
     flex: 1;
+    min-width: 0;       /* prevent flex item from expanding beyond its flex share */
+    overflow-x: clip;   /* clip long diffs without creating a scroll container (preserves sticky) */
 }
 
 /* ── Sidebar ── */
