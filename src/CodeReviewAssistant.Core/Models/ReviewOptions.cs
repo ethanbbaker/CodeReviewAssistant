@@ -11,7 +11,7 @@ public sealed class ReviewOptions
     // ── Technical settings ────────────────────────────────────────────────────
 
     /// <summary>Anthropic model ID to use.</summary>
-    public string Model { get; init; } = "claude-opus-4-6";
+    public string Model { get; init; } = "claude-sonnet-4-6";
 
     /// <summary>
     /// Maximum number of output tokens Claude may generate per API request.
