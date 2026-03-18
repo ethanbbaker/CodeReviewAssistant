@@ -695,18 +695,18 @@ h1:focus { outline: none; }
    ReviewConfigBar  (rcb-*)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Sticky wrapper keeps the bar pinned as user scrolls through the diff */
+/* Sticky wrapper — pins PR info card + review bar together at the top while scrolling */
 .rcb-sticky-wrapper {
     position: sticky;
     top: 0;
     z-index: 20;
-    margin: 0 -1.5rem;           /* bleed to content edges */
-    padding: 0 1.5rem;
-    background: rgba(11, 10, 20, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    margin: 0 -1.5rem 1rem;      /* bleed to content edges; gap below before diffs */
+    background: rgba(11, 10, 20, 0.95);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--cra-border);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+    padding: 0 1.5rem 0;
 }
 
 /* ── Outer + inner layout ── */
@@ -1022,33 +1022,7 @@ h1:focus { outline: none; }
     background: var(--cra-accent-light);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   File-jump review entry
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-.file-jump-review {
-    color: var(--cra-accent-light);
-    font-weight: 600;
-}
-
-.file-jump-review:hover { background: rgba(124,58,237,0.12); }
-
-.fj-divider {
-    border: none;
-    border-top: 1px solid var(--cra-border-subtle);
-    margin: 0.2rem 0;
-}
-
-.fj-reviewing {
-    color: var(--cra-accent-light) !important;
-    border-color: rgba(124,58,237,0.4) !important;
-}
-
-.fj-done {
-    color: var(--cra-success) !important;
-    border-color: rgba(52,211,153,0.35) !important;
-}
-
+/* ── Review-running spin (used by sidebar AI Review link icon) ── */
 .fj-review-spin {
     animation: rcb-rotate 3s linear infinite;
     color: var(--cra-accent-light);

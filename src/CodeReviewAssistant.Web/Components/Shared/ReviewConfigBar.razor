@@ -95,36 +95,35 @@
                 Options
             </button>
 
-            <!-- Start / Cancel / Re-run -->
-            @if (State.Status == ReviewRunStatus.Running)
-            {
-                <button class="rcb-btn rcb-btn-cancel" @onclick="() => OnCancel.InvokeAsync()" type="button">
+            <!-- Start / Re-run (disabled while running) -->
+            <button class="rcb-btn rcb-btn-start"
+                    @onclick="StartClicked"
+                    type="button"
+                    disabled="@(State.Status == ReviewRunStatus.Running)">
+                @if (State.Status is ReviewRunStatus.Complete or ReviewRunStatus.Cancelled or ReviewRunStatus.Error)
+                {
                     <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
-                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
                     </svg>
-                    Cancel
-                </button>
-            }
-            else
-            {
-                <button class="rcb-btn rcb-btn-start" @onclick="StartClicked" type="button">
-                    @if (State.Status is ReviewRunStatus.Complete or ReviewRunStatus.Cancelled or ReviewRunStatus.Error)
-                    {
-                        <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
-                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                        </svg>
-                        <span>Re-run</span>
-                    }
-                    else
-                    {
-                        <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
-                            <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
-                        </svg>
-                        <span>Start Review</span>
-                    }
-                </button>
-            }
+                    <span>Re-run</span>
+                }
+                else if (State.Status == ReviewRunStatus.Running)
+                {
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                    </svg>
+                    <span>Running…</span>
+                }
+                else
+                {
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                        <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                    </svg>
+                    <span>Start Review</span>
+                }
+            </button>
         </div>
     </div>
 
@@ -202,7 +201,6 @@
     [Parameter, EditorRequired] public ReviewSessionState State      { get; set; } = null!;
     [Parameter, EditorRequired] public GitHubPrReference  Reference  { get; set; } = null!;
     [Parameter, EditorRequired] public EventCallback<ReviewOptions> OnStart { get; set; }
-    [Parameter, EditorRequired] public EventCallback OnCancel                        { get; set; }
 
     // ── Model definitions ─────────────────────────────────────────────────────
     private record ModelDef(string Id, string Label);
