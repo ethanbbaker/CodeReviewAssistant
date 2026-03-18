@@ -1,5 +1,6 @@
 @inject ICodeReviewService   ReviewService
 @inject IReviewCacheService  ReviewCache
+@inject IJSRuntime           JS
 @implements IDisposable
 
 <div class="diff-viewer">
@@ -134,6 +135,17 @@
     <!-- AI review output panel -->
     <ReviewPanel State="_reviewState" />
 
+    <!-- Floating scroll-to-top button -->
+    <button class="scroll-top-btn"
+            @onclick="ScrollToTop"
+            title="Back to top"
+            type="button"
+            aria-label="Scroll to top">
+        <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/>
+        </svg>
+    </button>
+
 </div>
 
 @code {
@@ -230,6 +242,8 @@
 
     private void ToggleJump() => _jumpOpen = !_jumpOpen;
     private void CloseJump()  => _jumpOpen = false;
+
+    private async Task ScrollToTop() => await JS.InvokeVoidAsync("craScrollToTop");
 
     private static string GetStatusDot(DiffStatus status) => status switch
     {

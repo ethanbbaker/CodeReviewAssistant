@@ -64,8 +64,7 @@ public sealed class AnthropicCodeReviewService : ICodeReviewService
 
             var parameters = BuildParams(options, userMessage);
 
-            await foreach (var ev in _client.Messages.CreateStreaming(parameters)
-                               .WithCancellation(ct))
+            await foreach (var ev in _client.Messages.CreateStreaming(parameters, ct))
             {
                 if (ev.TryPickContentBlockDelta(out var cbDelta) &&
                     cbDelta.Delta.TryPickText(out var textDelta))

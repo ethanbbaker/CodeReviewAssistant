@@ -38,7 +38,7 @@
                 <svg class="tab-icon" viewBox="0 0 16 16" fill="currentColor">
                     <path fill-rule="evenodd" d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h4.5a.75.75 0 0 1 .75.75v1.372a2.25 2.25 0 1 0 1.5 0V9.25a2.25 2.25 0 0 0-2.25-2.25h-4.5A.75.75 0 0 1 5 6.25V5.372zm8.25 6.128a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/>
                 </svg>
-                <span class="tab-pr-label">PR&nbsp;#@session.Reference.PullRequestNumber</span>
+                <span class="tab-pr-label" title="@session.Context.Title">@TruncateTitle(session.Context.Title)</span>
                 <span class="tab-close"
                       @onclick:stopPropagation
                       @onclick="() => ReviewState.RemoveSession(idx)"
@@ -168,6 +168,10 @@
         DiffStatus.Binary  => "status-dot dot-binary",
         _                  => "status-dot dot-mod"
     };
+
+    /// <summary>Truncates a PR title to fit the narrow sidebar tab without changing its size.</summary>
+    private static string TruncateTitle(string title) =>
+        title.Length <= 22 ? title : title[..19] + "…";
 
     private static string GetShortName(string path)
     {

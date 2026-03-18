@@ -30,6 +30,9 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         };
+        window.craScrollToTop = () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
     </script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
