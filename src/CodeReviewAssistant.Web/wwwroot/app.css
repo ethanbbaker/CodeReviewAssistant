@@ -350,3 +350,319 @@ h1:focus { outline: none; }
     transition: background 0.15s;
 }
 .btn-retry:hover { background: rgba(248, 113, 113, 0.2); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ReviewPanel
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.review-panel {
+    margin-top: 2.5rem;
+    border-top: 1px solid var(--cra-border);
+    padding-top: 2rem;
+}
+
+/* ── CTA (idle state) ── */
+.review-cta {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+    background: var(--cra-surface);
+    border: 1px solid var(--cra-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.review-cta-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    background: rgba(124, 58, 237, 0.14);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cra-accent-light);
+}
+
+.review-cta-icon svg { width: 22px; height: 22px; }
+
+.review-cta-body { flex: 1; min-width: 0; }
+
+.review-cta-title {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cra-text);
+}
+
+.review-cta-desc {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    color: var(--cra-text-muted);
+    line-height: 1.5;
+}
+
+.btn-start-review {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--cra-accent) 0%, #6d28d9 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 0 14px rgba(124, 58, 237, 0.4);
+    transition: all 0.18s;
+}
+
+.btn-start-review:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, var(--cra-accent) 100%);
+    box-shadow: 0 0 22px rgba(124, 58, 237, 0.55);
+    transform: translateY(-1px);
+}
+
+/* ── Review header bar ── */
+.review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.review-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.review-header-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: var(--cra-accent-light);
+}
+
+.review-icon-spin {
+    animation: review-spin 3s linear infinite;
+}
+
+@keyframes review-spin {
+    0%   { transform: rotate(0deg)   scale(1);    opacity: 1; }
+    50%  { transform: rotate(180deg) scale(1.08); opacity: 0.8; }
+    100% { transform: rotate(360deg) scale(1);    opacity: 1; }
+}
+
+.review-status-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--cra-accent-light);
+}
+
+.review-status-done {
+    color: var(--cra-success);
+}
+
+.review-header-right { display: flex; gap: 0.5rem; }
+
+.btn-cancel-review,
+.btn-rerun-review {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--cra-border-subtle);
+    border-radius: 6px;
+    color: var(--cra-text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.3rem 0.7rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-cancel-review:hover { border-color: var(--cra-danger); color: var(--cra-danger); background: rgba(248,113,113,0.08); }
+.btn-rerun-review:hover  { border-color: var(--cra-accent); color: var(--cra-accent-light); background: rgba(124,58,237,0.1); }
+
+/* ── Indeterminate progress bar ── */
+.review-progress-bar {
+    height: 3px;
+    background: rgba(124, 58, 237, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.review-progress-fill {
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, var(--cra-accent), var(--cra-accent-light), transparent);
+    border-radius: 2px;
+}
+
+.review-progress-animated {
+    animation: review-slide 1.6s ease-in-out infinite;
+}
+
+@keyframes review-slide {
+    0%   { transform: translateX(-150%); }
+    100% { transform: translateX(350%); }
+}
+
+/* ── Review body (rendered markdown) ── */
+.review-body {
+    background: var(--cra-surface);
+    border: 1px solid var(--cra-border);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    color: var(--cra-text);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    overflow: hidden;
+}
+
+.review-body-streaming {
+    border-color: rgba(124, 58, 237, 0.35);
+    box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.12);
+}
+
+/* Markdown element styling within review body */
+.review-body h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--cra-accent-light);
+    margin: 1.5rem 0 0.6rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--cra-border);
+}
+
+.review-body h2:first-child { margin-top: 0; }
+
+.review-body h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cra-text);
+    margin: 1rem 0 0.4rem;
+}
+
+.review-body ol,
+.review-body ul {
+    padding-left: 1.4rem;
+    margin: 0.5rem 0;
+}
+
+.review-body li { margin-bottom: 0.65rem; }
+.review-body li > p { margin: 0; }
+
+.review-body p { margin: 0 0 0.75rem; }
+.review-body p:last-child { margin-bottom: 0; }
+
+.review-body strong { color: var(--cra-text); font-weight: 600; }
+
+.review-body code {
+    background: rgba(124, 58, 237, 0.14);
+    color: var(--cra-accent-light);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.82em;
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+.review-body pre {
+    background: #0d0b1a;
+    border: 1px solid var(--cra-border);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+}
+
+.review-body pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.8rem;
+    color: var(--cra-text);
+}
+
+.review-body blockquote {
+    border-left: 3px solid var(--cra-accent);
+    margin: 0.5rem 0;
+    padding: 0.4rem 0.9rem;
+    color: var(--cra-text-muted);
+    font-size: 0.875rem;
+}
+
+.review-body hr {
+    border: none;
+    border-top: 1px solid var(--cra-border);
+    margin: 1.25rem 0;
+}
+
+/* Severity badge colours — emitted by Claude as **[CRITICAL]** etc. in bold */
+.review-body strong:has-text { /* fallback handled by text colour below */ }
+
+/* ── Skeleton loader (before first text arrives) ── */
+.review-skeleton { padding: 0.25rem 0; }
+
+.skeleton-line {
+    background: linear-gradient(90deg,
+        rgba(124,58,237,0.08) 25%,
+        rgba(124,58,237,0.18) 50%,
+        rgba(124,58,237,0.08) 75%);
+    background-size: 200% 100%;
+    border-radius: 4px;
+    height: 0.85rem;
+    margin-bottom: 0.6rem;
+    animation: skeleton-wave 1.5s ease-in-out infinite;
+}
+
+.skeleton-line-lg { width: 72%; }
+.skeleton-line-md { width: 55%; }
+.skeleton-line-sm { width: 38%; }
+
+@keyframes skeleton-wave {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Cancelled / Error states ── */
+.review-cancelled {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.875rem;
+    color: var(--cra-text-muted);
+    padding: 0.75rem 0;
+}
+
+.review-error {
+    display: flex;
+    gap: 0.85rem;
+    background: rgba(248, 113, 113, 0.07);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    align-items: flex-start;
+}
+
+.review-error-icon {
+    flex-shrink: 0;
+    color: #f87171;
+}
+
+.review-error-icon svg { width: 18px; height: 18px; }
+
+.review-error-msg {
+    margin: 0 0 0.3rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fca5a5;
+}
+
+.review-error-detail {
+    margin: 0 0 0.65rem;
+    font-size: 0.8rem;
+    color: var(--cra-text-muted);
+}

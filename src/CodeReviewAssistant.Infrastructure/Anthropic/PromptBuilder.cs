@@ -16,39 +16,32 @@ internal static class PromptBuilder
         You are an expert software engineer performing a thorough pull-request code review.
 
         Your goal is to produce a clear, actionable review that helps the author improve the change.
-        Structure your response in Markdown using these sections (omit any section with nothing to say):
+        Structure your response in Markdown.  Include only the sections relevant to the categories
+        you have been asked to cover (listed in the user message).
+
+        For each section use this format:
+
+        ## <Section Name>
+        Numbered list of findings.  For each finding state:
+        - **[SEVERITY]** `path/to/file.ext` — concise description (explain *why* it is a problem).
+        - If suggested fixes are requested, follow with a fenced code block showing the fix.
+
+        Severity levels (use exactly these labels): CRITICAL · HIGH · MEDIUM · LOW · INFO
 
         ## Summary
-        One or two sentences describing what the PR does and your overall impression.
-
-        ## Issues
-        Numbered list of bugs, logic errors, security vulnerabilities, or correctness problems.
-        Include the file name and, where possible, the relevant line or snippet.
-
-        ## Suggestions
-        Numbered list of non-blocking improvements: readability, performance, naming, test coverage, etc.
-
-        ## Nitpicks (optional)
-        Minor style or formatting observations.
+        Always include this section last.  One or two sentences: what the PR does and your overall
+        impression.  If the PR looks good, say so briefly rather than inventing issues.
 
         Guidelines:
         - Be specific: quote code or line ranges rather than vague references.
         - Be constructive: explain *why* something is a problem and suggest a concrete fix.
-        - Distinguish blocking issues (must fix) from suggestions (nice to have).
-        - If a file is binary or has no diff, skip it.
-        - If the PR is small and looks good, say so briefly rather than inventing issues.
+        - Distinguish blocking issues from non-blocking suggestions.
+        - Skip binary files or files with no diff.
+        - Only report findings at or above the minimum severity specified in the user message.
         """;
 
     // ── User message builder ───────────────────────────────────────────────────
 
-    /// <summary>
-    /// Builds the user-turn message for a single chunk of files within a PR.
-    /// </summary>
-    /// <param name="context">Pull-request metadata and all file diffs.</param>
-    /// <param name="files">The subset of files to include in this request.</param>
-    /// <param name="chunkIndex">0-based index of this chunk (for multi-chunk preamble).</param>
-    /// <param name="totalChunks">Total number of chunks (1 for a single request).</param>
-    /// <param name="options">Review options (focus areas, etc.).</param>
     internal static string BuildUserMessage(
         PullRequestContext         context,
         IReadOnlyList<FileDiff>    files,
@@ -71,15 +64,32 @@ internal static class PromptBuilder
             sb.AppendLine(context.Description.Trim());
         }
 
-        // ── Focus areas ──────────────────────────────────────────────────────
-        if (options.FocusAreas.Count > 0)
+        // ── Review instructions ───────────────────────────────────────────────
+        sb.AppendLine();
+        sb.AppendLine("## Review Instructions");
+
+        // Categories
+        var enabledNames = options.EnabledCategories
+            .OrderBy(c => (int)c)
+            .Select(CategoryLabel);
+        sb.AppendLine($"**Categories to cover:** {string.Join(", ", enabledNames)}");
+
+        // Minimum severity
+        sb.AppendLine($"**Minimum severity to report:** {options.MinimumSeverity.ToString().ToUpperInvariant()}");
+
+        // Suggested fixes
+        sb.AppendLine(options.IncludeSuggestedFixes
+            ? "**Suggested fixes:** Yes — include a fenced code-block fix for each issue where practical."
+            : "**Suggested fixes:** No — describe the problem only, do not include code fixes.");
+
+        // Optional free-text focus
+        if (!string.IsNullOrWhiteSpace(options.FocusAreas))
         {
             sb.AppendLine();
-            sb.Append("**Review focus:** ");
-            sb.AppendLine(string.Join(", ", options.FocusAreas));
+            sb.AppendLine($"**Special focus:** {options.FocusAreas.Trim()}");
         }
 
-        // ── Chunking preamble ────────────────────────────────────────────────
+        // ── Chunking preamble ─────────────────────────────────────────────────
         if (totalChunks > 1)
         {
             sb.AppendLine();
@@ -92,11 +102,9 @@ internal static class PromptBuilder
         sb.AppendLine("---");
         sb.AppendLine();
 
-        // ── File diffs ───────────────────────────────────────────────────────
-        for (int i = 0; i < files.Count; i++)
+        // ── File diffs ────────────────────────────────────────────────────────
+        foreach (var file in files)
         {
-            var file = files[i];
-
             sb.AppendLine($"### `{file.FileName}` [{file.Status}]");
 
             if (file.IsBinary)
@@ -131,8 +139,21 @@ internal static class PromptBuilder
 
         sb.AppendLine("---");
         sb.AppendLine();
-        sb.AppendLine("Please review the diff above and provide your structured feedback.");
+        sb.AppendLine("Please review the diff above following the instructions and provide your structured feedback.");
 
         return sb.ToString();
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static string CategoryLabel(FindingCategory c) => c switch
+    {
+        FindingCategory.Security        => "Security",
+        FindingCategory.Performance     => "Performance",
+        FindingCategory.Correctness     => "Correctness / Bugs",
+        FindingCategory.Maintainability => "Maintainability",
+        FindingCategory.TestCoverage    => "Test Coverage",
+        FindingCategory.Style           => "Style / Nitpicks",
+        _                               => c.ToString(),
+    };
 }

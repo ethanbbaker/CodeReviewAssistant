@@ -52,9 +52,12 @@ public sealed class AnthropicCodeReviewService : ICodeReviewService
 
         for (int i = 0; i < totalChunks; i++)
         {
-            // Inter-chunk separator so the reader can visually distinguish
+            // Emit a progress notification before the first token arrives.
+            yield return ReviewChunk.Progress(i, totalChunks);
+
+            // Inter-chunk visual separator in the accumulated text.
             if (i > 0)
-                yield return new ReviewChunk($"\n\n---\n\n## Chunk {i + 1} of {totalChunks}\n\n");
+                yield return new ReviewChunk("\n\n---\n\n") { ChunkIndex = i, TotalChunks = totalChunks };
 
             var userMessage = PromptBuilder.BuildUserMessage(
                 context, chunks[i], i, totalChunks, options);
@@ -67,7 +70,7 @@ public sealed class AnthropicCodeReviewService : ICodeReviewService
                 if (ev.TryPickContentBlockDelta(out var cbDelta) &&
                     cbDelta.Delta.TryPickText(out var textDelta))
                 {
-                    yield return new ReviewChunk(textDelta.Text);
+                    yield return new ReviewChunk(textDelta.Text) { ChunkIndex = i, TotalChunks = totalChunks };
                 }
             }
         }

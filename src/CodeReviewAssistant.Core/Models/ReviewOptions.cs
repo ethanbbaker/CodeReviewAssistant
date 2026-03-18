@@ -5,25 +5,44 @@ namespace CodeReviewAssistant.Core.Models;
 /// </summary>
 public sealed class ReviewOptions
 {
-    /// <summary>Shared default instance with sensible defaults.</summary>
+    /// <summary>Shared default instance — all categories enabled, minimum severity Low.</summary>
     public static readonly ReviewOptions Default = new();
 
-    /// <summary>
-    /// Anthropic model ID to use.
-    /// Defaults to <c>claude-opus-4-6</c> per project guidelines.
-    /// </summary>
+    // ── Technical settings ────────────────────────────────────────────────────
+
+    /// <summary>Anthropic model ID to use.</summary>
     public string Model { get; init; } = "claude-opus-4-6";
 
     /// <summary>
     /// Maximum number of output tokens Claude may generate per API request.
-    /// For large PRs that are chunked, this limit applies per chunk.
+    /// Applies per chunk when the diff is split.
     /// </summary>
     public int MaxOutputTokens { get; init; } = 4096;
 
+    // ── User-facing review configuration ─────────────────────────────────────
+
     /// <summary>
-    /// Optional list of focus areas to emphasise in the review prompt,
-    /// e.g. <c>["security", "performance", "test coverage"]</c>.
-    /// When empty the prompt requests a general review.
+    /// Which finding categories to include in the review.
+    /// Defaults to all categories.
     /// </summary>
-    public IReadOnlyList<string> FocusAreas { get; init; } = [];
+    public IReadOnlySet<FindingCategory> EnabledCategories { get; init; } =
+        new HashSet<FindingCategory>(Enum.GetValues<FindingCategory>());
+
+    /// <summary>
+    /// Only report findings at or above this severity.
+    /// Defaults to <see cref="FindingSeverity.Low"/> (everything except Info-level noise).
+    /// </summary>
+    public FindingSeverity MinimumSeverity { get; init; } = FindingSeverity.Low;
+
+    /// <summary>
+    /// When <see langword="true"/>, Claude will include a suggested code fix for each issue.
+    /// </summary>
+    public bool IncludeSuggestedFixes { get; init; } = true;
+
+    /// <summary>
+    /// Optional free-text focus instruction appended to the prompt,
+    /// e.g. "focus on SQL injection risks".
+    /// <see langword="null"/> means no additional focus directive.
+    /// </summary>
+    public string? FocusAreas { get; init; }
 }
