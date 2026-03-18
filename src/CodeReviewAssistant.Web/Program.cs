@@ -1,6 +1,8 @@
+using Anthropic;
 using CodeReviewAssistant.Components;
 using CodeReviewAssistant.Components.Services;
 using CodeReviewAssistant.Core.Interfaces;
+using CodeReviewAssistant.Infrastructure.Anthropic;
 using CodeReviewAssistant.Infrastructure.GitHub;
 using Octokit;
 
@@ -24,6 +26,18 @@ builder.Services.AddSingleton<IGitHubClient>(_ =>
 
 builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IReviewStateService, ReviewStateService>();
+
+// Anthropic client — reads API key from configuration / user secrets
+builder.Services.AddSingleton<AnthropicClient>(_ =>
+{
+    var apiKey = builder.Configuration["Anthropic:ApiKey"];
+    return new AnthropicClient(new Anthropic.Core.ClientOptions
+    {
+        ApiKey = string.IsNullOrWhiteSpace(apiKey) ? "MISSING_KEY" : apiKey,
+    });
+});
+
+builder.Services.AddScoped<ICodeReviewService, AnthropicCodeReviewService>();
 
 var app = builder.Build();
 
