@@ -1,0 +1,299 @@
+@inject IJSRuntime JS
+
+<div class="rcb-outer">
+    <div class="rcb-inner">
+
+        <!-- ── Left: label + model chips ───────────────────────────── -->
+        <div class="rcb-left">
+            <svg class="rcb-ai-icon @(State.Status == ReviewRunStatus.Running ? "rcb-spin" : "")"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+            </svg>
+            <span class="rcb-label">AI Review</span>
+
+            <!-- Model chips -->
+            <div class="rcb-model-chips">
+                @foreach (var m in _models)
+                {
+                    <button class="rcb-chip @(_selectedModel == m.Id ? "rcb-chip-active" : "")"
+                            @onclick="() => SelectModel(m.Id)"
+                            type="button"
+                            disabled="@(State.Status == ReviewRunStatus.Running)"
+                            title="@m.Label">
+                        @m.Label
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- ── Right: status/actions ────────────────────────────────── -->
+        <div class="rcb-right">
+
+            <!-- Progress text when running -->
+            @if (State.Status == ReviewRunStatus.Running)
+            {
+                <span class="rcb-progress-text">
+                    @if (State.TotalChunks > 1)
+                    {
+                        <span>Chunk @(State.CurrentChunk + 1)/@State.TotalChunks</span>
+                    }
+                    else
+                    {
+                        <span>Analysing…</span>
+                    }
+                </span>
+            }
+
+            <!-- Jump to review link (when content exists) -->
+            @if (State.HasContent)
+            {
+                <a class="rcb-btn rcb-btn-ghost" href="#review-panel" title="Jump to review output">
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                        <path fill-rule="evenodd" d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"/>
+                    </svg>
+                    Review
+                </a>
+            }
+
+            <!-- Copy & Download (when complete) -->
+            @if (State.Status is ReviewRunStatus.Complete or ReviewRunStatus.Cancelled && State.HasContent)
+            {
+                <button class="rcb-btn rcb-btn-ghost" @onclick="CopyToClipboard" type="button" title="Copy review to clipboard">
+                    @if (_copyConfirmed)
+                    {
+                        <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                            <path d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 111.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/>
+                        </svg>
+                        <span>Copied!</span>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                            <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
+                        </svg>
+                        <span>Copy</span>
+                    }
+                </button>
+                <button class="rcb-btn rcb-btn-ghost" @onclick="Download" type="button" title="Download review as Markdown">
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                    <span>.md</span>
+                </button>
+            }
+
+            <!-- Options toggle -->
+            <button class="rcb-btn @(_showOptions ? "rcb-btn-active" : "rcb-btn-ghost")"
+                    @onclick="() => _showOptions = !_showOptions"
+                    type="button"
+                    title="@(_showOptions ? "Hide options" : "Show review options")">
+                <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                    <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+                </svg>
+                Options
+            </button>
+
+            <!-- Start / Cancel / Re-run -->
+            @if (State.Status == ReviewRunStatus.Running)
+            {
+                <button class="rcb-btn rcb-btn-cancel" @onclick="() => OnCancel.InvokeAsync()" type="button">
+                    <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                    Cancel
+                </button>
+            }
+            else
+            {
+                <button class="rcb-btn rcb-btn-start" @onclick="StartClicked" type="button">
+                    @if (State.Status is ReviewRunStatus.Complete or ReviewRunStatus.Cancelled or ReviewRunStatus.Error)
+                    {
+                        <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                        <span>Re-run</span>
+                    }
+                    else
+                    {
+                        <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                            <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                        </svg>
+                        <span>Start Review</span>
+                    }
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- ── Expandable options panel ──────────────────────────────────── -->
+    @if (_showOptions)
+    {
+        <div class="rcb-options">
+
+            <!-- Category chips -->
+            <div class="rcb-option-row">
+                <span class="rcb-option-label">Categories</span>
+                <div class="rcb-chips-group">
+                    @foreach (var cat in _allCategories)
+                    {
+                        var active = _enabledCategories.Contains(cat.Value);
+                        <button class="rcb-chip rcb-chip-cat @(active ? "rcb-chip-active" : "")"
+                                @onclick="() => ToggleCategory(cat.Value)"
+                                type="button"
+                                title="@(active ? "Disable" : "Enable") @cat.Label">
+                            @cat.Label
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Severity + Focus + Fixes -->
+            <div class="rcb-option-row rcb-option-row-inline">
+
+                <!-- Severity dropdown -->
+                <div class="rcb-option-group">
+                    <label class="rcb-option-label" for="rcb-severity">Min Severity</label>
+                    <select id="rcb-severity" class="rcb-select"
+                            value="@_minSeverity"
+                            @onchange="e => _minSeverity = Enum.Parse<FindingSeverity>(e.Value!.ToString()!)">
+                        <option value="">All</option>
+                        @foreach (FindingSeverity s in Enum.GetValues<FindingSeverity>())
+                        {
+                            <option value="@s">@s.ToString()</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Focus areas -->
+                <div class="rcb-option-group rcb-option-grow">
+                    <label class="rcb-option-label" for="rcb-focus">Focus Areas</label>
+                    <input id="rcb-focus" type="text" class="rcb-input"
+                           @bind="_focusAreas"
+                           placeholder="e.g. SQL injection, null checks…" />
+                </div>
+
+                <!-- Include fixes toggle -->
+                <div class="rcb-option-group">
+                    <label class="rcb-option-label" for="rcb-fixes">Suggest Fixes</label>
+                    <label class="rcb-toggle" title="Include suggested code fixes">
+                        <input id="rcb-fixes" type="checkbox" @bind="_includeFixes" />
+                        <span class="rcb-toggle-track">
+                            <span class="rcb-toggle-thumb"></span>
+                        </span>
+                    </label>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <!-- Streaming progress bar -->
+    @if (State.Status == ReviewRunStatus.Running)
+    {
+        <div class="rcb-progress-bar">
+            <div class="rcb-progress-fill rcb-progress-animated"></div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ReviewSessionState State      { get; set; } = null!;
+    [Parameter, EditorRequired] public GitHubPrReference  Reference  { get; set; } = null!;
+    [Parameter, EditorRequired] public EventCallback<ReviewOptions> OnStart { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnCancel                        { get; set; }
+
+    // ── Model definitions ─────────────────────────────────────────────────────
+    private record ModelDef(string Id, string Label);
+
+    private static readonly ModelDef[] _models =
+    [
+        new("claude-haiku-4-5",   "Haiku"),
+        new("claude-sonnet-4-5",  "Sonnet"),
+        new("claude-opus-4-5",    "Opus"),
+    ];
+
+    // ── Category definitions ──────────────────────────────────────────────────
+    private record CategoryDef(FindingCategory Value, string Label);
+
+    private static readonly CategoryDef[] _allCategories =
+    [
+        new(FindingCategory.Security,        "Security"),
+        new(FindingCategory.Performance,     "Performance"),
+        new(FindingCategory.Correctness,     "Correctness"),
+        new(FindingCategory.Maintainability, "Maintainability"),
+        new(FindingCategory.TestCoverage,    "Tests"),
+        new(FindingCategory.Style,           "Style"),
+    ];
+
+    // ── Local option state (user edits these before clicking Start) ───────────
+    private string             _selectedModel      = "claude-sonnet-4-5";
+    private HashSet<FindingCategory> _enabledCategories = new(Enum.GetValues<FindingCategory>());
+    private FindingSeverity?   _minSeverity;          // null = All
+    private string             _focusAreas         = string.Empty;
+    private bool               _includeFixes       = true;
+    private bool               _showOptions;
+    private bool               _copyConfirmed;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    protected override void OnParametersSet()
+    {
+        // Sync local options from persisted state (e.g. after tab switch).
+        var opts = State.Options;
+        _selectedModel      = opts.Model;
+        _enabledCategories  = new HashSet<FindingCategory>(opts.EnabledCategories);
+        _minSeverity        = opts.MinimumSeverity == FindingSeverity.Info ? null : opts.MinimumSeverity;
+        _focusAreas         = opts.FocusAreas ?? string.Empty;
+        _includeFixes       = opts.IncludeSuggestedFixes;
+    }
+
+    // ── Interactions ──────────────────────────────────────────────────────────
+
+    private void SelectModel(string id)
+    {
+        _selectedModel = id;
+    }
+
+    private void ToggleCategory(FindingCategory cat)
+    {
+        if (!_enabledCategories.Remove(cat))
+            _enabledCategories.Add(cat);
+    }
+
+    private async Task StartClicked()
+    {
+        var opts = BuildOptions();
+        State.Options = opts;   // persist for re-runs / tab switches
+        await OnStart.InvokeAsync(opts);
+    }
+
+    private ReviewOptions BuildOptions() => new()
+    {
+        Model                = _selectedModel,
+        EnabledCategories    = _enabledCategories.Count > 0
+                                   ? new HashSet<FindingCategory>(_enabledCategories)
+                                   : new HashSet<FindingCategory>(Enum.GetValues<FindingCategory>()),
+        MinimumSeverity      = _minSeverity ?? FindingSeverity.Info,
+        IncludeSuggestedFixes = _includeFixes,
+        FocusAreas           = string.IsNullOrWhiteSpace(_focusAreas) ? null : _focusAreas.Trim(),
+    };
+
+    private async Task CopyToClipboard()
+    {
+        await JS.InvokeVoidAsync("craClipboard", State.AccumulatedMarkdown);
+        _copyConfirmed = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        _copyConfirmed = false;
+        StateHasChanged();
+    }
+
+    private async Task Download()
+    {
+        var filename = $"review-{Reference.Owner}-{Reference.Repo}-pr{Reference.PullRequestNumber}.md";
+        await JS.InvokeVoidAsync("craDownload", filename, State.AccumulatedMarkdown);
+    }
+}

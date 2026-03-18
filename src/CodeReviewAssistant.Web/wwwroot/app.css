@@ -666,3 +666,396 @@ h1:focus { outline: none; }
     font-size: 0.8rem;
     color: var(--cra-text-muted);
 }
+
+/* ── ReviewPanel: idle hint ── */
+.review-idle-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.875rem;
+    color: var(--cra-text-muted);
+    padding: 0.75rem 0;
+}
+
+/* ── ReviewPanel: cancelled banner ── */
+.review-cancelled-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--cra-text-muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--cra-border-subtle);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ReviewConfigBar  (rcb-*)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Sticky wrapper keeps the bar pinned as user scrolls through the diff */
+.rcb-sticky-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    margin: 0 -1.5rem;           /* bleed to content edges */
+    padding: 0 1.5rem;
+    background: rgba(11, 10, 20, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--cra-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Outer + inner layout ── */
+.rcb-outer {
+    padding: 0.6rem 0;
+}
+
+.rcb-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    min-height: 2.25rem;
+}
+
+/* ── AI icon + label ── */
+.rcb-ai-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--cra-accent-light);
+}
+
+.rcb-spin {
+    animation: rcb-rotate 3s linear infinite;
+}
+
+@keyframes rcb-rotate {
+    0%   { transform: rotate(0deg)   scale(1); }
+    50%  { transform: rotate(180deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+.rcb-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--cra-text-muted);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.rcb-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.rcb-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+/* ── Model + generic chips ── */
+.rcb-model-chips {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.rcb-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--cra-border-subtle);
+    border-radius: 20px;
+    color: var(--cra-text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.18rem 0.65rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.rcb-chip:hover:not(:disabled) {
+    border-color: var(--cra-accent);
+    color: var(--cra-accent-light);
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.rcb-chip-active {
+    background: rgba(124, 58, 237, 0.2);
+    border-color: rgba(124, 58, 237, 0.6);
+    color: var(--cra-accent-light);
+}
+
+.rcb-chip-active:hover:not(:disabled) {
+    background: rgba(124, 58, 237, 0.3);
+}
+
+.rcb-chip:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Category chips inside options panel */
+.rcb-chip-cat { border-radius: 6px; }
+
+/* ── Action buttons ── */
+.rcb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.65rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    text-decoration: none;
+    white-space: nowrap;
+    line-height: 1.5;
+}
+
+.rcb-btn-ghost {
+    background: rgba(255,255,255,0.05);
+    border-color: var(--cra-border-subtle);
+    color: var(--cra-text-muted);
+}
+.rcb-btn-ghost:hover {
+    border-color: var(--cra-accent);
+    color: var(--cra-accent-light);
+    background: rgba(124,58,237,0.1);
+    text-decoration: none;
+}
+
+.rcb-btn-active {
+    background: rgba(124,58,237,0.18);
+    border-color: rgba(124,58,237,0.55);
+    color: var(--cra-accent-light);
+}
+
+.rcb-btn-start {
+    background: linear-gradient(135deg, var(--cra-accent) 0%, #6d28d9 100%);
+    border-color: var(--cra-accent);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(124,58,237,0.35);
+}
+.rcb-btn-start:hover {
+    box-shadow: 0 0 18px rgba(124,58,237,0.55);
+    transform: translateY(-1px);
+}
+
+.rcb-btn-cancel {
+    background: rgba(248,113,113,0.1);
+    border-color: rgba(248,113,113,0.35);
+    color: #f87171;
+}
+.rcb-btn-cancel:hover {
+    background: rgba(248,113,113,0.2);
+    border-color: #f87171;
+}
+
+/* ── Progress text ── */
+.rcb-progress-text {
+    font-size: 0.75rem;
+    color: var(--cra-accent-light);
+    font-weight: 500;
+    animation: rcb-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes rcb-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+}
+
+/* ── Indeterminate progress bar (at bottom of config bar) ── */
+.rcb-progress-bar {
+    height: 2px;
+    background: rgba(124,58,237,0.12);
+    overflow: hidden;
+    margin-top: 0.4rem;
+}
+
+.rcb-progress-fill {
+    height: 100%;
+    width: 35%;
+    background: linear-gradient(90deg, transparent, var(--cra-accent), var(--cra-accent-light), transparent);
+}
+
+.rcb-progress-animated {
+    animation: rcb-slide 1.6s ease-in-out infinite;
+}
+
+@keyframes rcb-slide {
+    0%   { transform: translateX(-160%); }
+    100% { transform: translateX(400%); }
+}
+
+/* ── Options panel ── */
+.rcb-options {
+    padding: 0.6rem 0 0.5rem;
+    border-top: 1px solid var(--cra-border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.rcb-option-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.rcb-option-row-inline {
+    align-items: center;
+}
+
+.rcb-option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.rcb-option-grow { flex: 1; min-width: 160px; }
+
+.rcb-option-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--cra-text-muted);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.rcb-chips-group {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+/* ── Severity select ── */
+.rcb-select {
+    background: var(--cra-surface-2);
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 6px;
+    color: var(--cra-text);
+    font-size: 0.78rem;
+    padding: 0.22rem 0.55rem;
+    cursor: pointer;
+    outline: none;
+    min-width: 100px;
+}
+.rcb-select:focus {
+    border-color: var(--cra-accent);
+    box-shadow: 0 0 0 2px rgba(124,58,237,0.2);
+}
+
+/* ── Focus areas input ── */
+.rcb-input {
+    width: 100%;
+    background: var(--cra-surface-2);
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: 6px;
+    color: var(--cra-text);
+    font-size: 0.78rem;
+    padding: 0.22rem 0.55rem;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.rcb-input::placeholder { color: var(--cra-text-muted); }
+.rcb-input:focus {
+    border-color: var(--cra-accent);
+    box-shadow: 0 0 0 2px rgba(124,58,237,0.2);
+}
+
+/* ── Suggest fixes toggle ── */
+.rcb-toggle {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.4rem;
+}
+
+.rcb-toggle input { display: none; }
+
+.rcb-toggle-track {
+    width: 32px;
+    height: 18px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--cra-border-subtle);
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.rcb-toggle input:checked + .rcb-toggle-track {
+    background: rgba(124,58,237,0.45);
+    border-color: rgba(124,58,237,0.6);
+}
+
+.rcb-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    background: var(--cra-text-muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.rcb-toggle input:checked + .rcb-toggle-track .rcb-toggle-thumb {
+    transform: translateX(14px);
+    background: var(--cra-accent-light);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   File-jump review entry
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.file-jump-review {
+    color: var(--cra-accent-light);
+    font-weight: 600;
+}
+
+.file-jump-review:hover { background: rgba(124,58,237,0.12); }
+
+.fj-divider {
+    border: none;
+    border-top: 1px solid var(--cra-border-subtle);
+    margin: 0.2rem 0;
+}
+
+.fj-reviewing {
+    color: var(--cra-accent-light) !important;
+    border-color: rgba(124,58,237,0.4) !important;
+}
+
+.fj-done {
+    color: var(--cra-success) !important;
+    border-color: rgba(52,211,153,0.35) !important;
+}
+
+.fj-review-spin {
+    animation: rcb-rotate 3s linear infinite;
+    color: var(--cra-accent-light);
+}
+
+/* Sidebar review link */
+.sidebar-review-link {
+    color: var(--cra-accent-light) !important;
+    font-weight: 600;
+}

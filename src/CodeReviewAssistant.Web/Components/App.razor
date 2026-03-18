@@ -17,6 +17,20 @@
 <body>
     <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
+    <script>
+        window.craClipboard = async (text) => {
+            await navigator.clipboard.writeText(text);
+        };
+        window.craDownload = (filename, content) => {
+            const blob = new Blob([content], { type: 'text/markdown; charset=utf-8' });
+            const url  = URL.createObjectURL(blob);
+            const a    = Object.assign(document.createElement('a'), { href: url, download: filename });
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+    </script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
