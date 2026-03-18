@@ -159,7 +159,6 @@
                     <select id="rcb-severity" class="rcb-select"
                             value="@_minSeverity"
                             @onchange="e => _minSeverity = Enum.Parse<FindingSeverity>(e.Value!.ToString()!)">
-                        <option value="">All</option>
                         @foreach (FindingSeverity s in Enum.GetValues<FindingSeverity>())
                         {
                             <option value="@s">@s.ToString()</option>
@@ -210,9 +209,9 @@
 
     private static readonly ModelDef[] _models =
     [
-        new("claude-haiku-4-5",   "Haiku"),
-        new("claude-sonnet-4-5",  "Sonnet"),
-        new("claude-opus-4-5",    "Opus"),
+        new("claude-haiku-4-5",  "Haiku"),
+        new("claude-sonnet-4-6", "Sonnet"),
+        new("claude-opus-4-6",   "Opus"),
     ];
 
     // ── Category definitions ──────────────────────────────────────────────────
@@ -229,9 +228,9 @@
     ];
 
     // ── Local option state (user edits these before clicking Start) ───────────
-    private string             _selectedModel      = "claude-sonnet-4-5";
+    private string                   _selectedModel     = "claude-sonnet-4-6";
     private HashSet<FindingCategory> _enabledCategories = new(Enum.GetValues<FindingCategory>());
-    private FindingSeverity?   _minSeverity;          // null = All
+    private FindingSeverity          _minSeverity       = FindingSeverity.Info;  // Info = show all
     private string             _focusAreas         = string.Empty;
     private bool               _includeFixes       = true;
     private bool               _showOptions;
@@ -245,7 +244,7 @@
         var opts = State.Options;
         _selectedModel      = opts.Model;
         _enabledCategories  = new HashSet<FindingCategory>(opts.EnabledCategories);
-        _minSeverity        = opts.MinimumSeverity == FindingSeverity.Info ? null : opts.MinimumSeverity;
+        _minSeverity        = opts.MinimumSeverity;
         _focusAreas         = opts.FocusAreas ?? string.Empty;
         _includeFixes       = opts.IncludeSuggestedFixes;
     }
@@ -276,7 +275,7 @@
         EnabledCategories    = _enabledCategories.Count > 0
                                    ? new HashSet<FindingCategory>(_enabledCategories)
                                    : new HashSet<FindingCategory>(Enum.GetValues<FindingCategory>()),
-        MinimumSeverity      = _minSeverity ?? FindingSeverity.Info,
+        MinimumSeverity      = _minSeverity,
         IncludeSuggestedFixes = _includeFixes,
         FocusAreas           = string.IsNullOrWhiteSpace(_focusAreas) ? null : _focusAreas.Trim(),
     };

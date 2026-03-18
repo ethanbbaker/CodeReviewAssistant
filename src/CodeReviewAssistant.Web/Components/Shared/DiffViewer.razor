@@ -56,16 +56,15 @@
         }
     </div>
 
-    <!-- ── Sticky review config bar ─────────────────────────────────────── -->
+    <!-- ── Sticky wrapper: config bar + file jump bar ──────────────────── -->
     <div class="rcb-sticky-wrapper">
         <ReviewConfigBar State="_reviewState"
                          Reference="Reference"
                          OnStart="HandleStartReview"
                          OnCancel="HandleCancelReview" />
-    </div>
 
-    <!-- Sticky file jump navigation -->
-    <div class="file-jump-bar">
+        <!-- File jump navigation sits inside sticky wrapper so it never obscures the controls above -->
+        <div class="file-jump-bar">
         <button class="file-jump-toggle" @onclick="ToggleJump" type="button">
             <svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
@@ -121,7 +120,8 @@
                 }
             </div>
         }
-    </div>
+        </div><!-- /file-jump-bar -->
+    </div><!-- /rcb-sticky-wrapper -->
 
     <!-- File diff cards -->
     <div class="diff-list">
@@ -218,6 +218,11 @@
 
     private void HandleCancelReview()
     {
+        // Flip the UI to "Cancelled" immediately so the button switches at once —
+        // the streaming loop will also catch the OperationCanceledException and
+        // confirm the same state, but the user sees feedback without network lag.
+        _reviewState.Status = ReviewRunStatus.Cancelled;
+        ReviewCache.NotifyChanged();
         _cts?.Cancel();
     }
 
