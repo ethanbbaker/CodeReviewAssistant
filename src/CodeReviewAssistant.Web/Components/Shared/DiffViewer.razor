@@ -148,6 +148,11 @@
                     _reviewState.CurrentChunk = chunk.ChunkIndex;
                     _reviewState.TotalChunks  = chunk.TotalChunks;
                 }
+                else if (chunk.IsUsage)
+                {
+                    _reviewState.TotalInputTokens  = chunk.InputTokens;
+                    _reviewState.TotalOutputTokens = chunk.OutputTokens;
+                }
                 else
                 {
                     _reviewState.AccumulatedMarkdown += chunk.Text;
@@ -206,7 +211,7 @@
                 CriticalFindings  = findings.Count(f => f.Severity == "CRITICAL"),
                 FindingsJson      = System.Text.Json.JsonSerializer.Serialize(findings),
                 ReviewDuration    = DateTimeOffset.UtcNow - _reviewStartedAt,
-                TokensUsed        = 0,  // streaming path — token tracking is a future enhancement
+                TokensUsed        = (int)(_reviewState.TotalInputTokens + _reviewState.TotalOutputTokens),
             };
 
             await HistoryRepository.AddAsync(record);

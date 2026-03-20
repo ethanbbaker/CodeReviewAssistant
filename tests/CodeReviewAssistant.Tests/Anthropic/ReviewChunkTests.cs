@@ -218,4 +218,110 @@ public class ReviewChunkTests
 
         Assert.False(state.HasContent);
     }
+
+    // ── ReviewChunk.Usage factory ─────────────────────────────────────────────
+
+    [Fact]
+    public void Usage_HasIsUsageTrue()
+    {
+        var chunk = ReviewChunk.Usage(1_000, 500);
+
+        Assert.True(chunk.IsUsage);
+    }
+
+    [Fact]
+    public void Usage_HasIsProgressFalse()
+    {
+        var chunk = ReviewChunk.Usage(1_000, 500);
+
+        Assert.False(chunk.IsProgress);
+    }
+
+    [Fact]
+    public void Usage_TextIsEmpty()
+    {
+        var chunk = ReviewChunk.Usage(1_000, 500);
+
+        Assert.Equal(string.Empty, chunk.Text);
+    }
+
+    [Fact]
+    public void Usage_SetsInputTokens()
+    {
+        var chunk = ReviewChunk.Usage(12_345, 0);
+
+        Assert.Equal(12_345, chunk.InputTokens);
+    }
+
+    [Fact]
+    public void Usage_SetsOutputTokens()
+    {
+        var chunk = ReviewChunk.Usage(0, 6_789);
+
+        Assert.Equal(6_789, chunk.OutputTokens);
+    }
+
+    [Theory]
+    [InlineData(0,      0)]
+    [InlineData(1_000,  500)]
+    [InlineData(50_000, 12_000)]
+    public void Usage_RoundTrips_TokenCounts(long input, long output)
+    {
+        var chunk = ReviewChunk.Usage(input, output);
+
+        Assert.Equal(input,  chunk.InputTokens);
+        Assert.Equal(output, chunk.OutputTokens);
+    }
+
+    [Fact]
+    public void Usage_ChunksWithSameValues_AreEqual()
+    {
+        var a = ReviewChunk.Usage(1_000, 500);
+        var b = ReviewChunk.Usage(1_000, 500);
+
+        Assert.Equal(a, b);
+    }
+
+    [Fact]
+    public void TextChunk_IsUsageIsFalse()
+    {
+        var chunk = new ReviewChunk("some text");
+
+        Assert.False(chunk.IsUsage);
+    }
+
+    [Fact]
+    public void TextChunk_TokenCountsDefaultToZero()
+    {
+        var chunk = new ReviewChunk("some text");
+
+        Assert.Equal(0, chunk.InputTokens);
+        Assert.Equal(0, chunk.OutputTokens);
+    }
+
+    // ── ReviewSessionState: token counters ────────────────────────────────────
+
+    [Fact]
+    public void NewState_HasZeroTokenCounts()
+    {
+        var state = new ReviewSessionState();
+
+        Assert.Equal(0, state.TotalInputTokens);
+        Assert.Equal(0, state.TotalOutputTokens);
+    }
+
+    [Fact]
+    public void Reset_ClearsTokenCounts()
+    {
+        var state = new ReviewSessionState
+        {
+            TotalInputTokens  = 10_000,
+            TotalOutputTokens = 3_000,
+        };
+
+        state.Reset();
+
+        Assert.Equal(0, state.TotalInputTokens);
+        Assert.Equal(0, state.TotalOutputTokens);
+    }
 }

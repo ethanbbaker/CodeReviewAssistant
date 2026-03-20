@@ -24,6 +24,18 @@ public sealed class ReviewSessionState
     /// <summary>Total number of chunks the diff was split into.</summary>
     public int TotalChunks { get; set; } = 1;
 
+    /// <summary>
+    /// Cumulative input tokens consumed across all API calls for this review.
+    /// Populated from the final <see cref="ReviewChunk.IsUsage"/> chunk.
+    /// </summary>
+    public long TotalInputTokens { get; set; }
+
+    /// <summary>
+    /// Cumulative output tokens produced across all API calls for this review.
+    /// Populated from the final <see cref="ReviewChunk.IsUsage"/> chunk.
+    /// </summary>
+    public long TotalOutputTokens { get; set; }
+
     /// <summary><see langword="true"/> when the review has produced some text.</summary>
     public bool HasContent => AccumulatedMarkdown.Length > 0;
 
@@ -31,9 +43,11 @@ public sealed class ReviewSessionState
     public void Reset()
     {
         AccumulatedMarkdown = string.Empty;
-        Status       = ReviewRunStatus.Idle;
-        ErrorMessage = null;
-        CurrentChunk = 0;
-        TotalChunks  = 1;
+        Status            = ReviewRunStatus.Idle;
+        ErrorMessage      = null;
+        CurrentChunk      = 0;
+        TotalChunks       = 1;
+        TotalInputTokens  = 0;
+        TotalOutputTokens = 0;
     }
 }
