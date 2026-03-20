@@ -3,7 +3,9 @@ using CodeReviewAssistant.Components;
 using CodeReviewAssistant.Components.Services;
 using CodeReviewAssistant.Core.Interfaces;
 using CodeReviewAssistant.Infrastructure.Anthropic;
+using CodeReviewAssistant.Infrastructure.Data;
 using CodeReviewAssistant.Infrastructure.GitHub;
+using Microsoft.EntityFrameworkCore;
 using Octokit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,7 +42,25 @@ builder.Services.AddSingleton<AnthropicClient>(_ =>
 
 builder.Services.AddScoped<ICodeReviewService, AnthropicCodeReviewService>();
 
+// ── Review history (EF Core + SQLite) ────────────────────────────────────────
+var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+var dbDir   = Path.Combine(appData, "CodeReviewAssistant");
+Directory.CreateDirectory(dbDir);
+var dbPath  = Path.Combine(dbDir, "history.db");
+
+builder.Services.AddDbContext<ReviewDbContext>(o =>
+    o.UseSqlite($"Data Source={dbPath}"));
+builder.Services.AddScoped<IReviewHistoryRepository, ReviewHistoryRepository>();
+
 var app = builder.Build();
+
+// Apply any pending EF Core migrations on startup (creates the DB on first run).
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider
+         .GetRequiredService<ReviewDbContext>()
+         .Database.Migrate();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

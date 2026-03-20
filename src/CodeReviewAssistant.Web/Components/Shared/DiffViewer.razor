@@ -1,6 +1,9 @@
-@inject ICodeReviewService   ReviewService
-@inject IReviewCacheService  ReviewCache
-@inject IJSRuntime           JS
+@using CodeReviewAssistant.Infrastructure.Data
+@inject ICodeReviewService       ReviewService
+@inject IReviewCacheService      ReviewCache
+@inject IReviewHistoryRepository HistoryRepository
+@inject IJSRuntime               JS
+@inject ILogger<DiffViewer>      Logger
 @implements IDisposable
 
 <div class="diff-viewer">
@@ -95,8 +98,9 @@
     [Parameter, EditorRequired] public PullRequestContext Context   { get; set; } = null!;
     [Parameter, EditorRequired] public GitHubPrReference  Reference { get; set; } = null!;
 
-    private ReviewSessionState       _reviewState = new();
+    private ReviewSessionState       _reviewState     = new();
     private CancellationTokenSource? _cts;
+    private DateTimeOffset           _reviewStartedAt;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -127,6 +131,8 @@
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
 
+        _reviewStartedAt = DateTimeOffset.UtcNow;
+
         _reviewState.Reset();
         _reviewState.Options = options;
         _reviewState.Status  = ReviewRunStatus.Running;
@@ -141,6 +147,11 @@
                 {
                     _reviewState.CurrentChunk = chunk.ChunkIndex;
                     _reviewState.TotalChunks  = chunk.TotalChunks;
+                }
+                else if (chunk.IsUsage)
+                {
+                    _reviewState.TotalInputTokens  = chunk.InputTokens;
+                    _reviewState.TotalOutputTokens = chunk.OutputTokens;
                 }
                 else
                 {
@@ -167,6 +178,50 @@
             _cts?.Dispose();
             _cts = null;
             ReviewCache.NotifyChanged();
+        }
+
+        // Persist a history record for completed and failed reviews.
+        // Cancelled reviews are intentional and produce no useful output.
+        if (_reviewState.Status is ReviewRunStatus.Complete or ReviewRunStatus.Error)
+        {
+            var historyStatus = _reviewState.Status == ReviewRunStatus.Complete
+                ? ReviewStatus.Completed
+                : ReviewStatus.Failed;
+
+            await SaveReviewRecordAsync(historyStatus);
+        }
+    }
+
+    // ── History persistence ───────────────────────────────────────────────────
+
+    private async Task SaveReviewRecordAsync(ReviewStatus status)
+    {
+        try
+        {
+            var findings = FindingsParser.Parse(_reviewState.AccumulatedMarkdown);
+            var record   = new ReviewRecord
+            {
+                Id                = Guid.NewGuid(),
+                RepositoryOwner   = Reference.Owner,
+                RepositoryName    = Reference.Repo,
+                PullRequestNumber = Reference.PullRequestNumber,
+                CreatedAt         = DateTime.UtcNow,
+                Status            = status,
+                TotalFindings     = findings.Count,
+                CriticalFindings  = findings.Count(f => f.Severity == "CRITICAL"),
+                FindingsJson      = System.Text.Json.JsonSerializer.Serialize(findings),
+                ReviewDuration    = DateTimeOffset.UtcNow - _reviewStartedAt,
+                TokensUsed        = (int)(_reviewState.TotalInputTokens + _reviewState.TotalOutputTokens),
+            };
+
+            await HistoryRepository.AddAsync(record);
+        }
+        catch (Exception ex)
+        {
+            // History save is best-effort — never surface storage errors to the user.
+            Logger.LogWarning(ex,
+                "Failed to save review history record for {Owner}/{Repo}#{PR}",
+                Reference.Owner, Reference.Repo, Reference.PullRequestNumber);
         }
     }
 

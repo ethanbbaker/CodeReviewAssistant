@@ -50,6 +50,9 @@ public sealed class AnthropicCodeReviewService : ICodeReviewService
             "Streaming review for PR '{Title}' ({FileCount} files, {ChunkCount} chunk(s))",
             context.Title, context.Files.Count, totalChunks);
 
+        long inputTokens  = 0;
+        long outputTokens = 0;
+
         for (int i = 0; i < totalChunks; i++)
         {
             // Emit a progress notification before the first token arrives.
@@ -64,6 +67,9 @@ public sealed class AnthropicCodeReviewService : ICodeReviewService
 
             var parameters = BuildParams(options, userMessage);
 
+            long chunkInputTokens  = 0;
+            long chunkOutputTokens = 0;
+
             await foreach (var ev in _client.Messages.CreateStreaming(parameters, ct))
             {
                 if (ev.TryPickContentBlockDelta(out var cbDelta) &&
@@ -71,8 +77,26 @@ public sealed class AnthropicCodeReviewService : ICodeReviewService
                 {
                     yield return new ReviewChunk(textDelta.Text) { ChunkIndex = i, TotalChunks = totalChunks };
                 }
+                else if (ev.TryPickStart(out var msgStart))
+                {
+                    chunkInputTokens = msgStart.Message.Usage.InputTokens;
+                }
+                else if (ev.TryPickDelta(out var msgDelta))
+                {
+                    chunkOutputTokens = msgDelta.Usage.OutputTokens;
+                }
             }
+
+            inputTokens  += chunkInputTokens;
+            outputTokens += chunkOutputTokens;
+
+            _logger.LogDebug(
+                "Streaming chunk {Chunk}/{Total}: {InputTokens} in / {OutputTokens} out tokens",
+                i + 1, totalChunks, chunkInputTokens, chunkOutputTokens);
         }
+
+        // Emit cumulative token counts so the UI can persist them to history.
+        yield return ReviewChunk.Usage(inputTokens, outputTokens);
     }
 
     /// <inheritdoc/>
