@@ -1,5 +1,7 @@
 @inject IReviewStateService ReviewState
 @inject IReviewCacheService ReviewCache
+@inject NavigationManager   Nav
+@inject IJSRuntime          JS
 @implements IDisposable
 
 <!-- Brand row -->
@@ -19,7 +21,7 @@
 
         <!-- Search / home tab -->
         <button class="tab-item @(ReviewState.ActiveIndex == null ? "tab-active" : "")"
-                @onclick="() => ReviewState.SetActiveIndex(null)"
+                @onclick="GoToSearch"
                 title="Search for a pull request">
             <svg class="tab-icon" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
@@ -50,6 +52,19 @@
             </button>
         }
     </div>
+
+    <!-- ── Persistent nav links ──────────────────────────────────────── -->
+    <div class="sidebar-nav-links px-3 pt-2 pb-1">
+        <a class="sidebar-nav-link @(Nav.Uri.EndsWith("/history", StringComparison.OrdinalIgnoreCase) ? "sidebar-nav-link-active" : "")"
+           href="/history">
+            <svg viewBox="0 0 16 16" fill="currentColor" width="12" height="12">
+                <path d="M8 3.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM2.5 8a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0z"/>
+                <path d="M8 5a.5.5 0 0 1 .5.5v2.293l1.646 1.647a.5.5 0 0 1-.707.707l-1.793-1.793A.5.5 0 0 1 7.5 8V5.5A.5.5 0 0 1 8 5z"/>
+            </svg>
+            Review History
+        </a>
+    </div>
+    <hr class="sidebar-divider" style="margin: 0.25rem 0;" />
 
     <!-- ── Active PR content ─────────────────────────────────────────── -->
     @if (ReviewState.ActiveIndex.HasValue && ReviewState.Context is { } ctx && ReviewState.Reference is { } rf)
@@ -115,7 +130,10 @@
             {
                 var file   = ctx.Files[i];
                 var anchor = $"file-{i}";
-                <a class="file-item" href="#@anchor" title="@file.FileName">
+                <a class="file-item" href="#@anchor"
+                   @onclick:preventDefault
+                   @onclick="() => ScrollToFile(anchor)"
+                   title="@file.FileName">
                     <span class="@GetStatusDot(file.Status)" aria-hidden="true"></span>
                     <span class="file-name">@GetShortName(file.FileName)</span>
                     @if (!file.IsBinary)
@@ -158,6 +176,17 @@
         ReviewState.OnChange -= StateHasChanged;
         ReviewCache.OnChange -= StateHasChanged;
     }
+
+    private void GoToSearch()
+    {
+        ReviewState.SetActiveIndex(null);
+        // If we're not already on the home page, navigate there.
+        if (!Nav.Uri.TrimEnd('/').Equals(Nav.BaseUri.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+            Nav.NavigateTo("/");
+    }
+
+    private void ScrollToFile(string id) =>
+        JS.InvokeVoidAsync("craScrollToFile", id);
 
     private static string GetStatusDot(DiffStatus status) => status switch
     {

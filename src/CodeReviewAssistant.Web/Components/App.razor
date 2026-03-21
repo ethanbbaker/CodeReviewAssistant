@@ -33,6 +33,14 @@
         window.craScrollToTop = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
+        window.craScrollToFile = (id) => {
+            const el     = document.getElementById(id);
+            const sticky = document.querySelector('.rcb-sticky-wrapper');
+            if (!el) return;
+            const offset = sticky ? sticky.getBoundingClientRect().height + 16 : 16;
+            const y      = el.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        };
         window.craRegisterEscHandler = (dotnetRef) => {
             window._craEscDotnet = dotnetRef;
             if (!window._craEscBound) {

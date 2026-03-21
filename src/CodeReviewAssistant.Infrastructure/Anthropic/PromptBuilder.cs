@@ -74,8 +74,15 @@ internal static class PromptBuilder
             .Select(CategoryLabel);
         sb.AppendLine($"**Categories to cover:** {string.Join(", ", enabledNames)}");
 
-        // Minimum severity
-        sb.AppendLine($"**Minimum severity to report:** {options.MinimumSeverity.ToString().ToUpperInvariant()}");
+        // Minimum severity — be explicit about ordering and use a hard rule
+        var minSev     = options.MinimumSeverity.ToString().ToUpperInvariant();
+        var sevOrder   = "CRITICAL (highest) → HIGH → MEDIUM → LOW → INFO (lowest)";
+        var suppressed = options.MinimumSeverity > FindingSeverity.Info
+            ? $" Do NOT mention any finding rated below {minSev} — omit it entirely."
+            : string.Empty;
+        sb.AppendLine($"**Minimum severity to report:** {minSev}");
+        sb.AppendLine($"**Severity scale:** {sevOrder}");
+        sb.AppendLine($"**IMPORTANT:** Only include findings rated {minSev} or higher.{suppressed}");
 
         // Suggested fixes
         sb.AppendLine(options.IncludeSuggestedFixes

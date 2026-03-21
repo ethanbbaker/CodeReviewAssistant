@@ -853,9 +853,15 @@ h1:focus { outline: none; }
     color: #fff;
     box-shadow: 0 0 10px rgba(124,58,237,0.35);
 }
-.rcb-btn-start:hover {
+.rcb-btn-start:hover:not(:disabled) {
     box-shadow: 0 0 18px rgba(124,58,237,0.55);
     transform: translateY(-1px);
+}
+.rcb-btn-start:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+    pointer-events: none;
 }
 
 .rcb-btn-cancel {
