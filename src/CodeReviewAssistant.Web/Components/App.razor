@@ -33,6 +33,25 @@
         window.craScrollToTop = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
+        window.craRegisterEscHandler = (dotnetRef) => {
+            window._craEscDotnet = dotnetRef;
+            if (!window._craEscBound) {
+                window._craEscBound = true;
+                document.addEventListener('keydown', window._craEscListener = (e) => {
+                    if (e.key === 'Escape' && window._craEscDotnet) {
+                        window._craEscDotnet.invokeMethodAsync('CancelReview');
+                    }
+                });
+            }
+        };
+        window.craUnregisterEscHandler = () => {
+            window._craEscDotnet = null;
+            if (window._craEscBound) {
+                document.removeEventListener('keydown', window._craEscListener);
+                window._craEscBound = false;
+                window._craEscListener = null;
+            }
+        };
     </script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>

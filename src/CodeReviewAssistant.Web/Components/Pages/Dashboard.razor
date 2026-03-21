@@ -8,9 +8,45 @@
 
 @if (_loading)
 {
-    <div class="dash-loading">
-        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        Loading history…
+    <!-- ── Stats skeleton ── -->
+    <div class="dash-stats-row">
+        @for (int i = 0; i < 5; i++)
+        {
+            <div class="dash-stat-card">
+                <div class="skeleton-block" style="height:2rem;width:60%;margin-bottom:.5rem;border-radius:6px;"></div>
+                <div class="skeleton-block" style="height:.75rem;width:80%;border-radius:4px;"></div>
+            </div>
+        }
+    </div>
+    <!-- ── Table skeleton ── -->
+    <div class="dash-section">
+        <div class="skeleton-block" style="height:.75rem;width:120px;border-radius:4px;margin-bottom:1rem;"></div>
+        <div class="dash-table-wrapper">
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        @for (int c = 0; c < 7; c++)
+                        {
+                            <th><div class="skeleton-block" style="height:.65rem;width:60px;border-radius:3px;"></div></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int r = 0; r < 6; r++)
+                    {
+                        <tr>
+                            <td><div class="skeleton-block" style="height:.8rem;width:140px;border-radius:3px;"></div></td>
+                            <td><div class="skeleton-block" style="height:.8rem;width:70px;border-radius:3px;"></div></td>
+                            <td><div class="skeleton-block" style="height:.8rem;width:40px;border-radius:3px;"></div></td>
+                            <td><div class="skeleton-block" style="height:.8rem;width:50px;border-radius:3px;"></div></td>
+                            <td><div class="skeleton-block" style="height:.8rem;width:55px;border-radius:3px;"></div></td>
+                            <td><div class="skeleton-block" style="height:.8rem;width:45px;border-radius:3px;"></div></td>
+                            <td><div class="skeleton-block" style="height:.8rem;width:80px;border-radius:3px;"></div></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 }
 else
