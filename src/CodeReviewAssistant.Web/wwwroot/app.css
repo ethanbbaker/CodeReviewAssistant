@@ -1073,3 +1073,272 @@ h1:focus { outline: none; }
 .scroll-top-btn:active {
     transform: translateY(0);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Dashboard — /history
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.dash-loading {
+    display: flex;
+    align-items: center;
+    padding: 3rem 0;
+    color: var(--cra-text-muted);
+    font-size: 0.9rem;
+}
+
+/* ── Stats row ── */
+.dash-stats-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.dash-stat-card {
+    flex: 1 1 140px;
+    background: var(--cra-surface);
+    border: 1px solid var(--cra-border);
+    border-radius: 12px;
+    padding: 1.1rem 1.4rem;
+    min-width: 120px;
+}
+
+.dash-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--cra-text);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.dash-stat-label {
+    font-size: 0.78rem;
+    color: var(--cra-text-muted);
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.dash-stat-note {
+    cursor: help;
+    color: var(--cra-text-muted);
+    font-size: 0.8rem;
+}
+
+.critical-text { color: var(--cra-danger) !important; }
+.cost-text     { color: var(--cra-success) !important; }
+
+/* ── Section headings ── */
+.dash-section { margin-bottom: 2rem; }
+
+.dash-section-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--cra-text-muted);
+    margin: 0 0 0.9rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--cra-border-subtle);
+}
+
+/* ── Severity chips (used in both stats and table) ── */
+.dash-severity-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.dash-severity-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.sev-critical { background: rgba(248, 113, 113, 0.15); color: #f87171; border-color: rgba(248,113,113,0.3); }
+.sev-high     { background: rgba(251, 191, 36, 0.13);  color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+.sev-medium   { background: rgba(167, 139, 250, 0.13); color: #a78bfa; border-color: rgba(167,139,250,0.3); }
+.sev-low      { background: rgba(52, 211, 153, 0.12);  color: #34d399; border-color: rgba(52,211,153,0.25); }
+.sev-info     { background: rgba(6, 182, 212, 0.12);   color: #06b6d4; border-color: rgba(6,182,212,0.25); }
+
+.sev-count {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 0 0.4em;
+    font-size: 0.7rem;
+    min-width: 1.2em;
+    text-align: center;
+}
+
+/* ── Table ── */
+.dash-table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--cra-border);
+}
+
+.dash-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.dash-table thead tr {
+    background: var(--cra-surface-2);
+}
+
+.dash-table th {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--cra-text-muted);
+    border-bottom: 1px solid var(--cra-border);
+    white-space: nowrap;
+}
+
+.dash-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--cra-border-subtle);
+    vertical-align: middle;
+}
+
+.dash-row {
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.dash-row:hover { background: rgba(124, 58, 237, 0.07); }
+.dash-row-active { background: rgba(124, 58, 237, 0.1) !important; }
+
+.dash-repo {
+    font-weight: 600;
+    color: var(--cra-text);
+    font-size: 0.875rem;
+}
+
+.dash-pr-num {
+    font-size: 0.75rem;
+    color: var(--cra-text-muted);
+    margin-top: 0.15rem;
+}
+
+.dash-status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.status-completed { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+.status-failed    { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+.status-cancelled { background: rgba(123, 132, 144, 0.15); color: var(--cra-text-muted); }
+
+.dash-findings { font-weight: 600; margin-right: 0.4rem; }
+
+.dash-crit-badge {
+    font-size: 0.7rem;
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+}
+
+.dash-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    font-size: 0.82rem;
+}
+
+/* ── Expanded detail row ── */
+.dash-detail-row td {
+    background: rgba(124, 58, 237, 0.04);
+    padding: 0 !important;
+    border-bottom: 1px solid var(--cra-border) !important;
+}
+
+.dash-detail {
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.dash-detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    color: var(--cra-text-muted);
+}
+
+.dash-meta-item strong {
+    color: var(--cra-text);
+    margin-right: 0.3rem;
+}
+
+.dash-findings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.dash-findings-table th {
+    padding: 0.45rem 0.75rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--cra-text-muted);
+    border-bottom: 1px solid var(--cra-border-subtle);
+}
+
+.dash-findings-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top;
+}
+
+.finding-file {
+    color: var(--cra-accent-light);
+    font-size: 0.78rem;
+    max-width: 260px;
+    word-break: break-all;
+}
+
+.finding-desc { color: var(--cra-text); max-width: 520px; }
+
+.dash-detail-empty {
+    color: var(--cra-text-muted);
+    font-size: 0.85rem;
+    margin: 0;
+    padding: 0.5rem 0;
+}
+
+/* ── Empty state ── */
+.dash-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1rem;
+    color: var(--cra-text-muted);
+    text-align: center;
+}
+
+.dash-empty svg {
+    width: 40px;
+    height: 40px;
+    opacity: 0.35;
+}

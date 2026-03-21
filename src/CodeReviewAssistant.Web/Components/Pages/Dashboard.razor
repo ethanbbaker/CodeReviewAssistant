@@ -1,0 +1,223 @@
+@page "/history"
+@using System.Text.Json
+@using CodeReviewAssistant.Infrastructure.Data
+@inject IReviewHistoryRepository HistoryRepository
+@rendermode InteractiveServer
+
+<PageTitle>Review History — CodeReviewAI</PageTitle>
+
+@if (_loading)
+{
+    <div class="dash-loading">
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        Loading history…
+    </div>
+}
+else
+{
+    <!-- ── Stats row ── -->
+    <div class="dash-stats-row">
+        <div class="dash-stat-card">
+            <div class="dash-stat-value">@_stats.TotalReviews</div>
+            <div class="dash-stat-label">Total reviews</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-value">@_stats.TotalFindings</div>
+            <div class="dash-stat-label">Total findings</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-value critical-text">@_stats.CriticalFindings</div>
+            <div class="dash-stat-label">Critical findings</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-value">@_stats.TotalTokensUsed.ToString("N0")</div>
+            <div class="dash-stat-label">Tokens used</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-value cost-text">@_stats.EstimatedCost</div>
+            <div class="dash-stat-label">Est. cost <span class="dash-stat-note" title="Estimated at $9/MTok blended rate for Claude Sonnet">ⓘ</span></div>
+        </div>
+    </div>
+
+    <!-- ── Severity breakdown ── -->
+    @if (_stats.SeverityCounts.Count > 0)
+    {
+        <div class="dash-section">
+            <h2 class="dash-section-title">Finding categories</h2>
+            <div class="dash-severity-row">
+                @foreach (var (severity, count) in _stats.SeverityCounts.OrderByDescending(x => x.Value))
+                {
+                    <div class="dash-severity-chip sev-@severity.ToLowerInvariant()">
+                        <span class="sev-label">@severity</span>
+                        <span class="sev-count">@count</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- ── Recent reviews ── -->
+    <div class="dash-section">
+        <h2 class="dash-section-title">Recent reviews</h2>
+
+        @if (_reviews.Count == 0)
+        {
+            <div class="dash-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/>
+                </svg>
+                <p>No reviews yet. <a href="/">Review a pull request</a> to get started.</p>
+            </div>
+        }
+        else
+        {
+            <div class="dash-table-wrapper">
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Repository / PR</th>
+                            <th>Status</th>
+                            <th>Findings</th>
+                            <th>Duration</th>
+                            <th>Tokens</th>
+                            <th>Est. cost</th>
+                            <th>Reviewed at</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in _reviews)
+                        {
+                            var isExpanded = _expandedId == r.Id;
+                            <tr class="dash-row @(isExpanded ? "dash-row-active" : "")"
+                                @onclick="() => ToggleExpand(r.Id)"
+                                title="Click to @(isExpanded ? "collapse" : "view findings")">
+                                <td>
+                                    <div class="dash-repo">@r.RepositoryOwner/@r.RepositoryName</div>
+                                    @if (r.PullRequestNumber.HasValue)
+                                    {
+                                        <div class="dash-pr-num">PR #@r.PullRequestNumber</div>
+                                    }
+                                </td>
+                                <td><span class="dash-status-badge status-@r.Status.ToString().ToLowerInvariant()">@r.Status</span></td>
+                                <td>
+                                    @if (r.TotalFindings > 0)
+                                    {
+                                        <span class="dash-findings">@r.TotalFindings</span>
+                                        @if (r.CriticalFindings > 0)
+                                        {
+                                            <span class="dash-crit-badge">@r.CriticalFindings critical</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="dash-mono">@FormatDuration(r.ReviewDuration)</td>
+                                <td class="dash-mono">@(r.TokensUsed > 0 ? r.TokensUsed.ToString("N0") : "—")</td>
+                                <td class="dash-mono cost-text">@EstimateCost(r.TokensUsed)</td>
+                                <td class="dash-mono text-muted">@r.CreatedAt.ToLocalTime().ToString("MMM d, HH:mm")</td>
+                            </tr>
+                            @if (isExpanded)
+                            {
+                                <tr class="dash-detail-row">
+                                    <td colspan="7">
+                                        <ReviewDetail Record="r" />
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool                    _loading     = true;
+    private List<ReviewRecord>      _reviews     = [];
+    private DashboardStats          _stats       = new();
+    private Guid?                   _expandedId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _reviews = (await HistoryRepository.GetRecentAsync(50)).ToList();
+        _stats   = DashboardStats.Compute(_reviews);
+        _loading = false;
+    }
+
+    private void ToggleExpand(Guid id) =>
+        _expandedId = _expandedId == id ? null : id;
+
+    private static string FormatDuration(TimeSpan ts) =>
+        ts.TotalMinutes >= 1
+            ? $"{(int)ts.TotalMinutes}m {ts.Seconds:D2}s"
+            : $"{ts.TotalSeconds:F1}s";
+
+    private static string EstimateCost(int tokens) =>
+        tokens > 0 ? $"~${tokens / 1_000_000.0 * 9.0:F4}" : "—";
+
+    // ── Stats model ───────────────────────────────────────────────────────────
+
+    private sealed class DashboardStats
+    {
+        public int                          TotalReviews     { get; init; }
+        public int                          TotalFindings    { get; init; }
+        public int                          CriticalFindings { get; init; }
+        public long                         TotalTokensUsed  { get; init; }
+        public string                       EstimatedCost    { get; init; } = "—";
+        public Dictionary<string, int>      SeverityCounts   { get; init; } = [];
+
+        public static DashboardStats Compute(List<ReviewRecord> reviews)
+        {
+            if (reviews.Count == 0)
+                return new DashboardStats();
+
+            var severityCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            int totalFindings  = 0;
+            int critical       = 0;
+            long totalTokens   = 0;
+
+            foreach (var r in reviews)
+            {
+                totalFindings += r.TotalFindings;
+                critical      += r.CriticalFindings;
+                totalTokens   += r.TokensUsed;
+
+                if (r.FindingsJson is not ("[]" or ""))
+                {
+                    try
+                    {
+                        var findings = JsonSerializer.Deserialize<List<FindingRecord>>(r.FindingsJson);
+                        if (findings is not null)
+                        {
+                            foreach (var f in findings)
+                            {
+                                var sev = f.Severity.ToUpperInvariant();
+                                severityCounts.TryGetValue(sev, out var c);
+                                severityCounts[sev] = c + 1;
+                            }
+                        }
+                    }
+                    catch { /* malformed JSON — skip */ }
+                }
+            }
+
+            var costStr = totalTokens > 0
+                ? $"~${totalTokens / 1_000_000.0 * 9.0:F3}"
+                : "—";
+
+            return new DashboardStats
+            {
+                TotalReviews     = reviews.Count,
+                TotalFindings    = totalFindings,
+                CriticalFindings = critical,
+                TotalTokensUsed  = totalTokens,
+                EstimatedCost    = costStr,
+                SeverityCounts   = severityCounts,
+            };
+        }
+    }
+}

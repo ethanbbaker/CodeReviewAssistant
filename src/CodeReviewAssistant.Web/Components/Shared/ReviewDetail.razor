@@ -1,0 +1,78 @@
+@using System.Text.Json
+
+<div class="dash-detail">
+
+    <div class="dash-detail-meta">
+        <span class="dash-meta-item">
+            <strong>Duration</strong>
+            @FormatDuration(Record.ReviewDuration)
+        </span>
+        <span class="dash-meta-item">
+            <strong>Tokens</strong>
+            @(Record.TokensUsed > 0 ? Record.TokensUsed.ToString("N0") : "—")
+        </span>
+        <span class="dash-meta-item">
+            <strong>Est. cost</strong>
+            <span class="cost-text">@EstimateCost(Record.TokensUsed)</span>
+        </span>
+        <span class="dash-meta-item">
+            <strong>Reviewed</strong>
+            @Record.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+        </span>
+    </div>
+
+    @if (_findings.Count > 0)
+    {
+        <table class="dash-findings-table">
+            <thead>
+                <tr>
+                    <th>Severity</th>
+                    <th>File</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in _findings)
+                {
+                    <tr>
+                        <td><span class="dash-severity-chip sev-@f.Severity.ToLowerInvariant()">@f.Severity</span></td>
+                        <td class="dash-mono finding-file">@f.FilePath</td>
+                        <td class="finding-desc">@f.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="dash-detail-empty">No structured findings were parsed from this review.</p>
+    }
+
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ReviewRecord Record { get; set; } = null!;
+
+    private List<FindingRecord> _findings = [];
+
+    protected override void OnParametersSet()
+    {
+        _findings = [];
+        if (Record.FindingsJson is not ("[]" or ""))
+        {
+            try
+            {
+                _findings = JsonSerializer.Deserialize<List<FindingRecord>>(Record.FindingsJson) ?? [];
+            }
+            catch { /* malformed — show empty */ }
+        }
+    }
+
+    private static string FormatDuration(TimeSpan ts) =>
+        ts.TotalMinutes >= 1
+            ? $"{(int)ts.TotalMinutes}m {ts.Seconds:D2}s"
+            : $"{ts.TotalSeconds:F1}s";
+
+    private static string EstimateCost(int tokens) =>
+        tokens > 0 ? $"~${tokens / 1_000_000.0 * 9.0:F4}" : "—";
+}
