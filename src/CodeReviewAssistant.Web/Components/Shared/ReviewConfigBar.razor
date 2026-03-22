@@ -16,13 +16,27 @@
             <div class="rcb-model-chips">
                 @foreach (var m in _models)
                 {
-                    <button class="rcb-chip @(_selectedModel == m.Id ? "rcb-chip-active" : "")"
-                            @onclick="() => SelectModel(m.Id)"
-                            type="button"
-                            disabled="@(State.Status == ReviewRunStatus.Running)"
-                            title="@m.Label">
-                        @m.Label
-                    </button>
+                    if (m.Disabled)
+                    {
+                        <span class="rcb-chip-unavail-wrapper"
+                              title="Reviews using this model are unavailable at the moment">
+                            <button class="rcb-chip"
+                                    type="button"
+                                    disabled>
+                                @m.Label
+                            </button>
+                        </span>
+                    }
+                    else
+                    {
+                        <button class="rcb-chip @(_selectedModel == m.Id ? "rcb-chip-active" : "")"
+                                @onclick="() => SelectModel(m.Id)"
+                                type="button"
+                                disabled="@(State.Status == ReviewRunStatus.Running)"
+                                title="@m.Label">
+                            @m.Label
+                        </button>
+                    }
                 }
             </div>
         </div>
@@ -203,13 +217,13 @@
     [Parameter, EditorRequired] public EventCallback<ReviewOptions> OnStart { get; set; }
 
     // ── Model definitions ─────────────────────────────────────────────────────
-    private record ModelDef(string Id, string Label);
+    private record ModelDef(string Id, string Label, bool Disabled = false);
 
     private static readonly ModelDef[] _models =
     [
         new("claude-haiku-4-5",  "Haiku"),
-        new("claude-sonnet-4-6", "Sonnet"),
-        new("claude-opus-4-6",   "Opus"),
+        new("claude-sonnet-4-6", "Sonnet", Disabled: true),
+        new("claude-opus-4-6",   "Opus",   Disabled: true),
     ];
 
     // ── Category definitions ──────────────────────────────────────────────────
@@ -226,7 +240,7 @@
     ];
 
     // ── Local option state (user edits these before clicking Start) ───────────
-    private string                   _selectedModel     = "claude-sonnet-4-6";
+    private string                   _selectedModel     = "claude-haiku-4-5";
     private HashSet<FindingCategory> _enabledCategories = new(Enum.GetValues<FindingCategory>());
     private FindingSeverity          _minSeverity       = FindingSeverity.Info;  // Info = show all
     private string             _focusAreas         = string.Empty;
@@ -239,8 +253,11 @@
     protected override void OnParametersSet()
     {
         // Sync local options from persisted state (e.g. after tab switch).
+        // If the persisted model is now disabled, fall back to Haiku.
         var opts = State.Options;
-        _selectedModel      = opts.Model;
+        _selectedModel      = _models.Any(m => m.Id == opts.Model && !m.Disabled)
+                                  ? opts.Model
+                                  : "claude-haiku-4-5";
         _enabledCategories  = new HashSet<FindingCategory>(opts.EnabledCategories);
         _minSeverity        = opts.MinimumSeverity;
         _focusAreas         = opts.FocusAreas ?? string.Empty;

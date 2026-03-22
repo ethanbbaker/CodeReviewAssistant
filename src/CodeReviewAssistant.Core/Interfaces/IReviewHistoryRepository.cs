@@ -29,4 +29,11 @@ public interface IReviewHistoryRepository
 
     /// <summary>Permanently removes the record with the given <paramref name="id"/>. No-ops if not found.</summary>
     Task DeleteAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns the total tokens used (input + output combined) across all reviews
+    /// whose <see cref="ReviewRecord.CreatedAt"/> falls on today's UTC date.
+    /// Used to enforce the daily spend limit before starting a new review.
+    /// </summary>
+    Task<long> GetTodaysTotalTokensAsync(CancellationToken ct = default);
 }

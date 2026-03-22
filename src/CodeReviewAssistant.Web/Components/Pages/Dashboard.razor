@@ -71,7 +71,7 @@ else
         </div>
         <div class="dash-stat-card">
             <div class="dash-stat-value cost-text">@_stats.EstimatedCost</div>
-            <div class="dash-stat-label">Est. cost <span class="dash-stat-note" title="Estimated at $9/MTok blended rate for Claude Sonnet">ⓘ</span></div>
+            <div class="dash-stat-label">Est. cost <span class="dash-stat-note" title="Estimated at $2/MTok blended rate for Claude Haiku 4.5">ⓘ</span></div>
         </div>
     </div>
 
@@ -193,7 +193,7 @@ else
             : $"{ts.TotalSeconds:F1}s";
 
     private static string EstimateCost(int tokens) =>
-        tokens > 0 ? $"~${tokens / 1_000_000.0 * 9.0:F4}" : "—";
+        tokens > 0 ? $"~${tokens / 1_000_000.0 * 2.0:F4}" : "—";
 
     // ── Stats model ───────────────────────────────────────────────────────────
 
@@ -242,7 +242,7 @@ else
             }
 
             var costStr = totalTokens > 0
-                ? $"~${totalTokens / 1_000_000.0 * 9.0:F3}"
+                ? $"~${totalTokens / 1_000_000.0 * 2.0:F3}"
                 : "—";
 
             return new DashboardStats

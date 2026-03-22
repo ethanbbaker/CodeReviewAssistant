@@ -84,5 +84,5 @@
     [Parameter, EditorRequired] public ReviewSessionState State { get; set; } = null!;
 
     private static readonly MarkdownPipeline _mdPipeline =
-        new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+        new MarkdownPipelineBuilder().UseAdvancedExtensions().DisableHtml().Build();
 }
