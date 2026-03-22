@@ -29,6 +29,7 @@ builder.Services.AddSingleton<IGitHubClient>(_ =>
 builder.Services.AddScoped<IGitHubService, GitHubService>();
 builder.Services.AddScoped<IReviewStateService, ReviewStateService>();
 builder.Services.AddScoped<IReviewCacheService, ReviewCacheService>();
+builder.Services.AddScoped<ToastService>();
 
 // Anthropic client — reads API key from configuration / user secrets
 builder.Services.AddSingleton<AnthropicClient>(_ =>

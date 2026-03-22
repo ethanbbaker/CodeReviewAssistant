@@ -1,7 +1,9 @@
 @using CodeReviewAssistant.Infrastructure.Data
+@using CodeReviewAssistant.Components.Services
 @inject ICodeReviewService       ReviewService
 @inject IReviewCacheService      ReviewCache
 @inject IReviewHistoryRepository HistoryRepository
+@inject ToastService             Toast
 @inject IJSRuntime               JS
 @inject ILogger<DiffViewer>      Logger
 @implements IDisposable
@@ -28,11 +30,11 @@
 
             <div class="pr-meta-row">
                 <span class="pr-branch">
-                    <span class="branch-chip">@Context.BaseBranch</span>
+                    <span class="branch-chip head">@Context.HeadBranch</span>
                     <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <path fill-rule="evenodd" d="M1 8a.5.5 0 01.5-.5h11.793l-3.147-3.146a.5.5 0 01.708-.708l4 4a.5.5 0 010 .708l-4 4a.5.5 0 01-.708-.708L13.293 8.5H1.5A.5.5 0 011 8z"/>
                     </svg>
-                    <span class="branch-chip head">@Context.HeadBranch</span>
+                    <span class="branch-chip">@Context.BaseBranch</span>
                 </span>
 
                 <span class="pr-stat-pill add">+@Context.TotalAdditions</span>
@@ -101,6 +103,7 @@
     private ReviewSessionState       _reviewState     = new();
     private CancellationTokenSource? _cts;
     private DateTimeOffset           _reviewStartedAt;
+    private DotNetObjectReference<DiffViewer>? _selfRef;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -119,6 +122,7 @@
         ReviewCache.OnChange -= OnCacheChanged;
         _cts?.Cancel();
         _cts?.Dispose();
+        _selfRef?.Dispose();
     }
 
     private void OnCacheChanged() => InvokeAsync(StateHasChanged);
@@ -137,6 +141,10 @@
         _reviewState.Options = options;
         _reviewState.Status  = ReviewRunStatus.Running;
         ReviewCache.NotifyChanged();
+
+        // Register Esc key handler so user can cancel with keyboard.
+        _selfRef ??= DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("craRegisterEscHandler", _selfRef);
 
         try
         {
@@ -172,9 +180,11 @@
             _reviewState.Status       = ReviewRunStatus.Error;
             _reviewState.ErrorMessage = ex.Message is { Length: < 300 } m ? m
                                       : "An unexpected error occurred.";
+            Toast.ShowError(_reviewState.ErrorMessage);
         }
         finally
         {
+            await JS.InvokeVoidAsync("craUnregisterEscHandler");
             _cts?.Dispose();
             _cts = null;
             ReviewCache.NotifyChanged();
@@ -224,6 +234,10 @@
                 Reference.Owner, Reference.Repo, Reference.PullRequestNumber);
         }
     }
+
+    /// <summary>Called by the JS Esc handler to cancel a running review.</summary>
+    [JSInvokable]
+    public void CancelReview() => _cts?.Cancel();
 
     private async Task ScrollToTop() => await JS.InvokeVoidAsync("craScrollToTop");
 }
