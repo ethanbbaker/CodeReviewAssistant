@@ -6,6 +6,7 @@
 @using Octokit
 @inject IGitHubService       GitHubService
 @inject IReviewStateService  ReviewState
+@inject ToastService         Toast
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -15,12 +16,37 @@
         : "CodeReviewAI — Review a Pull Request")
 </PageTitle>
 
-@* Show the diff viewer when a PR tab is active; otherwise show the search form. *@
+@* Show the diff viewer when a PR tab is active; otherwise show the search form / loading skeleton. *@
 @if (ReviewState.ActiveIndex.HasValue
      && ReviewState.Context  is not null
      && ReviewState.Reference is not null)
 {
     <DiffViewer Context="ReviewState.Context" Reference="ReviewState.Reference" />
+}
+else if (_formState == FormState.Loading)
+{
+    <!-- ── Full-page loading skeleton while fetching PR ── -->
+    <div class="pr-fetch-skeleton">
+        <!-- Sticky header skeleton -->
+        <div class="pf-skel-header">
+            <div class="skeleton-block" style="height:1.5rem;width:55%;border-radius:6px;"></div>
+            <div class="skeleton-block" style="height:1rem;width:30%;border-radius:4px;margin-top:.6rem;"></div>
+            <div class="pf-skel-pills">
+                @for (int i = 0; i < 4; i++) {
+                    <div class="skeleton-block" style="height:1.4rem;width:60px;border-radius:999px;"></div>
+                }
+            </div>
+        </div>
+        <!-- File cards skeleton -->
+        @for (int f = 0; f < 4; f++) {
+            <div class="pf-skel-card">
+                <div class="skeleton-block" style="height:.9rem;width:@(f % 2 == 0 ? "45%" : "60%");border-radius:4px;margin-bottom:.75rem;"></div>
+                @for (int l = 0; l < 5; l++) {
+                    <div class="skeleton-block" style="height:.6rem;width:@(70 + l * 4)%;border-radius:3px;margin-bottom:.4rem;"></div>
+                }
+            </div>
+        }
+    </div>
 }
 else
 {
@@ -29,8 +55,7 @@ else
 
             <!-- Hero -->
             <div class="pr-hero">
-                <img src="robot-logo.svg" alt="Robot logo"
-                     class="pr-hero-icon @(_formState == FormState.Loading ? "hero-pulse" : "")" />
+                <img src="robot-logo.svg" alt="Robot logo" class="pr-hero-icon" />
                 <div>
                     <h1 class="mb-0 fs-3 fw-bold">Review a Pull Request</h1>
                     <p class="text-muted mb-0 mt-1" style="font-size:0.88rem;">
@@ -53,8 +78,7 @@ else
                                @oninput="OnUrlInput"
                                placeholder="https://github.com/owner/repo/pull/123"
                                autocomplete="off"
-                               spellcheck="false"
-                               disabled="@(_formState == FormState.Loading)" />
+                               spellcheck="false" />
 
                     @if (_parsed is not null)
                     {
@@ -89,58 +113,66 @@ else
                     <ValidationMessage For="@(() => _model.Url)" class="text-danger small mt-1" />
                 </div>
 
-                <!-- Analyze / loading button -->
-                @if (_formState == FormState.Loading)
-                {
-                    <button type="button" class="btn btn-primary btn-lg w-100" disabled>
-                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Fetching PR&hellip;
-                    </button>
-                }
-                else
-                {
-                    <button type="submit"
-                            class="btn btn-primary btn-lg w-100"
-                            disabled="@(!CanSubmit)">
-                        <svg class="inline-icon me-1" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M10.97 4.97a.75.75 0 011.07 1.05l-3.99 4.99a.75.75 0 01-1.08.02L4.324 8.384a.75.75 0 111.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 01.02-.022z"/>
-                        </svg>
-                        Analyze PR
-                    </button>
-                }
+                <button type="submit"
+                        class="btn btn-primary btn-lg w-100"
+                        disabled="@(!CanSubmit)">
+                    <svg class="inline-icon me-1" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M10.97 4.97a.75.75 0 011.07 1.05l-3.99 4.99a.75.75 0 01-1.08.02L4.324 8.384a.75.75 0 111.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 01.02-.022z"/>
+                    </svg>
+                    Analyze PR
+                </button>
+
+                <p class="pr-kbd-hint">Press <kbd>Enter</kbd> to analyze</p>
             </EditForm>
 
-            <!-- Error state -->
-            @if (_formState == FormState.Error && _errorMessage is not null)
-            {
-                <div class="error-card mt-4">
-                    <div class="error-icon">
+            <hr style="border-color: var(--cra-border); margin: 1.5rem 0 1.25rem;" />
+
+            <!-- Onboarding feature hints -->
+            <div class="onboarding-grid">
+                <div class="onboarding-card">
+                    <div class="onboarding-icon">
                         <svg viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.75 3.75a.75.75 0 011.5 0v4a.75.75 0 01-1.5 0v-4zm.75 8a1 1 0 110-2 1 1 0 010 2z"/>
+                            <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2z"/>
                         </svg>
                     </div>
-                    <div class="error-body">
-                        <p class="error-message">@_errorMessage</p>
-                        @if (_errorDetail is not null)
-                        {
-                            <p class="error-detail">@_errorDetail</p>
-                        }
-                        <button class="btn-retry" @onclick="Reset">Try again</button>
+                    <div>
+                        <div class="onboarding-title">Structured findings</div>
+                        <div class="onboarding-desc">Gets CRITICAL → INFO severity ratings, file paths, and fix suggestions for every issue found.</div>
                     </div>
                 </div>
-            }
+                <div class="onboarding-card">
+                    <div class="onboarding-icon">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="onboarding-title">Large diff support</div>
+                        <div class="onboarding-desc">Automatically splits big PRs into chunks so nothing gets skipped, no matter how many files changed.</div>
+                    </div>
+                </div>
+                <div class="onboarding-card">
+                    <div class="onboarding-icon">
+                        <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="onboarding-title">Review history</div>
+                        <div class="onboarding-desc">Every review is saved locally with finding counts, token usage, and estimated cost. <a href="/history">Browse history →</a></div>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>
 }
 
 @code {
-    // ── Form-only state machine (Reviewing is gone — driven by ReviewState.ActiveIndex) ──
-    private enum FormState { Input, Loading, Error }
+    // ── Form-only state machine ────────────────────────────────────────────────
+    private enum FormState { Input, Loading }
 
-    private FormState _formState    = FormState.Input;
-    private string?   _errorMessage;
-    private string?   _errorDetail;
+    private FormState _formState = FormState.Input;
 
     // ── Form ───────────────────────────────────────────────────────
     private readonly PrInputModel _model = new();
@@ -153,7 +185,7 @@ else
             ? (_parsed is not null ? "is-valid" : "is-invalid")
             : string.Empty;
 
-    private bool CanSubmit => _parsed?.IsPullRequest == true && _formState == FormState.Input;
+    private bool CanSubmit => _parsed?.IsPullRequest == true && _formState != FormState.Loading;
 
     // ── Lifecycle ──────────────────────────────────────────────────
     protected override void OnInitialized()
@@ -166,8 +198,6 @@ else
         ReviewState.OnChange -= OnReviewStateChanged;
     }
 
-    // When any tab switch happens just re-render; the template condition on
-    // ReviewState.ActiveIndex is the single source of truth for what to show.
     private void OnReviewStateChanged()
     {
         // If we were loading and the tab somehow disappeared, reset the form.
@@ -182,7 +212,6 @@ else
     {
         _model.Url      = e.Value?.ToString() ?? string.Empty;
         _formState      = FormState.Input;
-        _errorMessage   = null;
         _showValidation = !string.IsNullOrWhiteSpace(_model.Url);
         _parsed         = GitHubUrlParser.TryParse(_model.Url);
     }
@@ -192,9 +221,7 @@ else
         _parsed = GitHubUrlParser.TryParse(_model.Url);
         if (_parsed?.IsPullRequest != true) return;
 
-        _formState    = FormState.Loading;
-        _errorMessage = null;
-        _errorDetail  = null;
+        _formState = FormState.Loading;
 
         try
         {
@@ -206,17 +233,11 @@ else
         }
         catch (Exception ex)
         {
-            _formState    = FormState.Error;
-            _errorMessage = MapErrorMessage(ex);
-            _errorDetail  = MapErrorDetail(ex);
+            _formState = FormState.Input;
+            var msg    = MapErrorMessage(ex);
+            var detail = MapErrorDetail(ex);
+            Toast.ShowError(detail is not null ? $"{msg} {detail}" : msg);
         }
-    }
-
-    private void Reset()
-    {
-        _formState    = FormState.Input;
-        _errorMessage = null;
-        _errorDetail  = null;
     }
 
     // ── Error mapping ──────────────────────────────────────────────

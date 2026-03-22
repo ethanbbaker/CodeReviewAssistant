@@ -252,6 +252,36 @@
     line-height: 1.6;
 }
 
+/* ── Persistent nav links (History, etc.) ── */
+.sidebar-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sidebar-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: var(--cra-text-muted);
+    text-decoration: none;
+    transition: background 0.12s, color 0.12s;
+}
+
+.sidebar-nav-link:hover {
+    background: rgba(124, 58, 237, 0.1);
+    color: var(--cra-accent-light);
+    text-decoration: none;
+}
+
+.sidebar-nav-link-active {
+    background: rgba(124, 58, 237, 0.15);
+    color: var(--cra-accent-light);
+}
+
 /* ── Collapse (mobile) ── */
 .nav-scrollable { display: none; }
 .navbar-toggler:checked ~ .nav-scrollable { display: block; }

@@ -1,96 +1,76 @@
-@inject IReviewStateService ReviewState
+@using CodeReviewAssistant.Infrastructure.Data
+@using CodeReviewAssistant.Components.Services
+@inject ICodeReviewService       ReviewService
+@inject IReviewCacheService      ReviewCache
+@inject IReviewHistoryRepository HistoryRepository
+@inject ToastService             Toast
+@inject IJSRuntime               JS
+@inject ILogger<DiffViewer>      Logger
+@implements IDisposable
 
 <div class="diff-viewer">
 
-    <!-- PR header card -->
-    <div class="pr-header">
-        <div class="pr-title-row">
-            <h1 class="pr-title">@Context.Title</h1>
-            <a class="pr-gh-link"
-               href="@Reference.ToString()"
-               target="_blank" rel="noopener noreferrer"
-               title="Open on GitHub">
-                <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-                </svg>
-                @Reference.Owner/@Reference.Repo #@Reference.PullRequestNumber
-            </a>
-        </div>
+    <!-- ── Sticky header: PR info + review controls always visible while scrolling ── -->
+    <div class="rcb-sticky-wrapper">
 
-        <div class="pr-meta-row">
-            <span class="pr-branch">
-                <span class="branch-chip">@Context.BaseBranch</span>
-                <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M1 8a.5.5 0 01.5-.5h11.793l-3.147-3.146a.5.5 0 01.708-.708l4 4a.5.5 0 010 .708l-4 4a.5.5 0 01-.708-.708L13.293 8.5H1.5A.5.5 0 011 8z"/>
-                </svg>
-                <span class="branch-chip head">@Context.HeadBranch</span>
-            </span>
+        <!-- PR header card -->
+        <div class="pr-header">
+            <div class="pr-title-row">
+                <h1 class="pr-title">@Context.Title</h1>
+                <a class="pr-gh-link"
+                   href="@Reference.ToString()"
+                   target="_blank" rel="noopener noreferrer"
+                   title="Open on GitHub">
+                    <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    @Reference.Owner/@Reference.Repo #@Reference.PullRequestNumber
+                </a>
+            </div>
 
-            <span class="pr-stat-pill add">+@Context.TotalAdditions</span>
-            <span class="pr-stat-pill del">-@Context.TotalDeletions</span>
-            <span class="pr-stat-pill neutral">
-                @Context.Files.Count file@(Context.Files.Count == 1 ? "" : "s")
-            </span>
-            @if (Context.TruncatedFileCount > 0)
-            {
-                <span class="pr-stat-pill warn" title="Some large diffs were truncated">
-                    @Context.TruncatedFileCount truncated
+            <div class="pr-meta-row">
+                <span class="pr-branch">
+                    <span class="branch-chip head">@Context.HeadBranch</span>
+                    <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M1 8a.5.5 0 01.5-.5h11.793l-3.147-3.146a.5.5 0 01.708-.708l4 4a.5.5 0 010 .708l-4 4a.5.5 0 01-.708-.708L13.293 8.5H1.5A.5.5 0 011 8z"/>
+                    </svg>
+                    <span class="branch-chip">@Context.BaseBranch</span>
                 </span>
-            }
-            @if (Context.BinaryFileCount > 0)
-            {
+
+                <span class="pr-stat-pill add">+@Context.TotalAdditions</span>
+                <span class="pr-stat-pill del">-@Context.TotalDeletions</span>
                 <span class="pr-stat-pill neutral">
-                    @Context.BinaryFileCount binary
+                    @Context.Files.Count file@(Context.Files.Count == 1 ? "" : "s")
                 </span>
-            }
-        </div>
-
-        @if (!string.IsNullOrWhiteSpace(Context.Description))
-        {
-            <details class="pr-description">
-                <summary>Description</summary>
-                <p>@Context.Description</p>
-            </details>
-        }
-    </div>
-
-    <!-- Sticky file jump navigation -->
-    <div class="file-jump-bar">
-        <button class="file-jump-toggle" @onclick="ToggleJump" type="button">
-            <svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
-            </svg>
-            <span>@Context.Files.Count file@(Context.Files.Count == 1 ? "" : "s") changed</span>
-            <svg class="file-jump-chevron @(_jumpOpen ? "chevron-up" : "")"
-                 viewBox="0 0 16 16" fill="currentColor">
-                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-            </svg>
-        </button>
-
-        @if (_jumpOpen)
-        {
-            <div class="file-jump-panel">
-                @for (int i = 0; i < Context.Files.Count; i++)
+                @if (Context.TruncatedFileCount > 0)
                 {
-                    var file   = Context.Files[i];
-                    var anchor = $"file-{i}";
-                    <a class="file-jump-item" href="#@anchor" @onclick="CloseJump">
-                        <span class="@GetStatusDot(file.Status)" aria-hidden="true"></span>
-                        <span class="file-jump-name" title="@file.FileName">@file.FileName</span>
-                        @if (!file.IsBinary)
-                        {
-                            <span class="file-jump-stat fj-add">+@file.Additions</span>
-                            <span class="file-jump-stat fj-del">-@file.Deletions</span>
-                        }
-                        else
-                        {
-                            <span class="file-jump-bin">bin</span>
-                        }
-                    </a>
+                    <span class="pr-stat-pill warn" title="Some large diffs were truncated">
+                        @Context.TruncatedFileCount truncated
+                    </span>
+                }
+                @if (Context.BinaryFileCount > 0)
+                {
+                    <span class="pr-stat-pill neutral">
+                        @Context.BinaryFileCount binary
+                    </span>
                 }
             </div>
-        }
-    </div>
+
+            @if (!string.IsNullOrWhiteSpace(Context.Description))
+            {
+                <details class="pr-description">
+                    <summary>Description</summary>
+                    <p>@Context.Description</p>
+                </details>
+            }
+        </div>
+
+        <!-- Review config bar sits immediately below PR info -->
+        <ReviewConfigBar State="_reviewState"
+                         Reference="Reference"
+                         OnStart="HandleStartReview" />
+
+    </div><!-- /rcb-sticky-wrapper -->
 
     <!-- File diff cards -->
     <div class="diff-list">
@@ -100,24 +80,164 @@
         }
     </div>
 
+    <!-- AI review output panel -->
+    <ReviewPanel State="_reviewState" />
+
+    <!-- Floating scroll-to-top button -->
+    <button class="scroll-top-btn"
+            @onclick="ScrollToTop"
+            title="Back to top"
+            type="button"
+            aria-label="Scroll to top">
+        <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/>
+        </svg>
+    </button>
+
 </div>
 
 @code {
     [Parameter, EditorRequired] public PullRequestContext Context   { get; set; } = null!;
     [Parameter, EditorRequired] public GitHubPrReference  Reference { get; set; } = null!;
 
-    private bool _jumpOpen;
+    private ReviewSessionState       _reviewState     = new();
+    private CancellationTokenSource? _cts;
+    private DateTimeOffset           _reviewStartedAt;
+    private DotNetObjectReference<DiffViewer>? _selfRef;
 
-    private void ToggleJump() => _jumpOpen = !_jumpOpen;
-    private void CloseJump()  => _jumpOpen = false;
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    private static string GetStatusDot(DiffStatus status) => status switch
+    protected override void OnParametersSet()
     {
-        DiffStatus.Added   => "status-dot dot-add",
-        DiffStatus.Deleted => "status-dot dot-del",
-        DiffStatus.Renamed => "status-dot dot-rename",
-        DiffStatus.Copied  => "status-dot dot-rename",
-        DiffStatus.Binary  => "status-dot dot-binary",
-        _                  => "status-dot dot-mod"
-    };
+        _reviewState = ReviewCache.GetOrCreate(Reference);
+    }
+
+    protected override void OnInitialized()
+    {
+        ReviewCache.OnChange += OnCacheChanged;
+    }
+
+    public void Dispose()
+    {
+        ReviewCache.OnChange -= OnCacheChanged;
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _selfRef?.Dispose();
+    }
+
+    private void OnCacheChanged() => InvokeAsync(StateHasChanged);
+
+    // ── Review orchestration ──────────────────────────────────────────────────
+
+    private async Task HandleStartReview(ReviewOptions options)
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+
+        _reviewStartedAt = DateTimeOffset.UtcNow;
+
+        _reviewState.Reset();
+        _reviewState.Options = options;
+        _reviewState.Status  = ReviewRunStatus.Running;
+        ReviewCache.NotifyChanged();
+
+        // Register Esc key handler so user can cancel with keyboard.
+        _selfRef ??= DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("craRegisterEscHandler", _selfRef);
+
+        try
+        {
+            await foreach (var chunk in ReviewService.StreamReviewAsync(
+                               Context, options, _cts.Token))
+            {
+                if (chunk.IsProgress)
+                {
+                    _reviewState.CurrentChunk = chunk.ChunkIndex;
+                    _reviewState.TotalChunks  = chunk.TotalChunks;
+                }
+                else if (chunk.IsUsage)
+                {
+                    _reviewState.TotalInputTokens  = chunk.InputTokens;
+                    _reviewState.TotalOutputTokens = chunk.OutputTokens;
+                }
+                else
+                {
+                    _reviewState.AccumulatedMarkdown += chunk.Text;
+                }
+
+                ReviewCache.NotifyChanged();
+            }
+
+            _reviewState.Status = ReviewRunStatus.Complete;
+        }
+        catch (OperationCanceledException)
+        {
+            _reviewState.Status = ReviewRunStatus.Cancelled;
+        }
+        catch (Exception ex)
+        {
+            _reviewState.Status       = ReviewRunStatus.Error;
+            _reviewState.ErrorMessage = ex.Message is { Length: < 300 } m ? m
+                                      : "An unexpected error occurred.";
+            Toast.ShowError(_reviewState.ErrorMessage);
+        }
+        finally
+        {
+            await JS.InvokeVoidAsync("craUnregisterEscHandler");
+            _cts?.Dispose();
+            _cts = null;
+            ReviewCache.NotifyChanged();
+        }
+
+        // Persist a history record for completed and failed reviews.
+        // Cancelled reviews are intentional and produce no useful output.
+        if (_reviewState.Status is ReviewRunStatus.Complete or ReviewRunStatus.Error)
+        {
+            var historyStatus = _reviewState.Status == ReviewRunStatus.Complete
+                ? ReviewStatus.Completed
+                : ReviewStatus.Failed;
+
+            await SaveReviewRecordAsync(historyStatus);
+        }
+    }
+
+    // ── History persistence ───────────────────────────────────────────────────
+
+    private async Task SaveReviewRecordAsync(ReviewStatus status)
+    {
+        try
+        {
+            var findings = FindingsParser.Parse(_reviewState.AccumulatedMarkdown);
+            var record   = new ReviewRecord
+            {
+                Id                = Guid.NewGuid(),
+                RepositoryOwner   = Reference.Owner,
+                RepositoryName    = Reference.Repo,
+                PullRequestNumber = Reference.PullRequestNumber,
+                CreatedAt         = DateTime.UtcNow,
+                Status            = status,
+                TotalFindings     = findings.Count,
+                CriticalFindings  = findings.Count(f => f.Severity == "CRITICAL"),
+                FindingsJson      = System.Text.Json.JsonSerializer.Serialize(findings),
+                ReviewDuration    = DateTimeOffset.UtcNow - _reviewStartedAt,
+                TokensUsed        = (int)(_reviewState.TotalInputTokens + _reviewState.TotalOutputTokens),
+            };
+
+            await HistoryRepository.AddAsync(record);
+        }
+        catch (Exception ex)
+        {
+            // History save is best-effort — never surface storage errors to the user.
+            Logger.LogWarning(ex,
+                "Failed to save review history record for {Owner}/{Repo}#{PR}",
+                Reference.Owner, Reference.Repo, Reference.PullRequestNumber);
+        }
+    }
+
+    /// <summary>Called by the JS Esc handler to cancel a running review.</summary>
+    [JSInvokable]
+    public void CancelReview() => _cts?.Cancel();
+
+    private async Task ScrollToTop() => await JS.InvokeVoidAsync("craScrollToTop");
 }
