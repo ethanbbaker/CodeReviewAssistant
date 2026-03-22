@@ -11,7 +11,7 @@ An AI-powered pull request review tool built with .NET 10 Blazor Server. Paste a
 - **Suggested fixes** — optionally include fenced code-block fixes for each finding
 - **Free-text focus** — add custom guidance (e.g. "focus on SQL injection risks in the data access layer") to direct Claude's attention
 - **Large PR support** — diffs exceeding the context window are automatically split into chunks and reviewed in sequence; results are concatenated into one report
-- **Token & cost tracking** — input and output tokens are counted per review and displayed alongside an estimated cost (blended $9/MTok)
+- **Token & cost tracking** — input and output tokens are counted per review and displayed alongside an estimated cost (blended $2/MTok for Claude Haiku 4.5)
 
 ### Diff Viewer
 - **PR diff viewer** — fetches any public GitHub pull request and renders the unified diff with syntax highlighting for additions, deletions, and context lines

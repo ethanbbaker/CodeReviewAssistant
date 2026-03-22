@@ -132,9 +132,9 @@
     private async Task HandleStartReview(ReviewOptions options)
     {
         // Enforce daily spend limit ($1.00/day) before making any API call.
-        // Uses a blended $9/MTok rate against today's combined token usage.
+        // Uses a blended $2/MTok rate for Claude Haiku 4.5 against today's combined token usage.
         var todayTokens = await HistoryRepository.GetTodaysTotalTokensAsync();
-        if (todayTokens * 0.000_009m >= 1.00m)
+        if (todayTokens * 0.000_002m >= 1.00m)
         {
             var resetTime = DateTime.UtcNow.Date.AddDays(1);
             Toast.ShowWarning(
