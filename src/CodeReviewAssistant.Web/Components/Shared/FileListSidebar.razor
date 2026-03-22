@@ -35,7 +35,7 @@
             var idx     = i;
             var session = ReviewState.Sessions[i];
             <button class="tab-item @(ReviewState.ActiveIndex == idx ? "tab-active" : "")"
-                    @onclick="() => ReviewState.SetActiveIndex(idx)"
+                    @onclick="() => GoToSession(idx)"
                     title="@session.Context.Title">
                 <svg class="tab-icon" viewBox="0 0 16 16" fill="currentColor">
                     <path fill-rule="evenodd" d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h4.5a.75.75 0 0 1 .75.75v1.372a2.25 2.25 0 1 0 1.5 0V9.25a2.25 2.25 0 0 0-2.25-2.25h-4.5A.75.75 0 0 1 5 6.25V5.372zm8.25 6.128a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0z"/>
@@ -83,11 +83,11 @@
             </a>
             <p class="pr-meta-title" title="@ctx.Title">@ctx.Title</p>
             <div class="d-flex align-items-center gap-1 flex-wrap mt-1">
-                <span class="branch-badge" title="Base branch">@ctx.BaseBranch</span>
+                <span class="branch-badge branch-badge-head" title="Head branch">@ctx.HeadBranch</span>
                 <svg style="width:10px;height:10px;opacity:.45;flex-shrink:0;" viewBox="0 0 16 16" fill="currentColor">
                     <path fill-rule="evenodd" d="M1 8a.5.5 0 01.5-.5h11.793l-3.147-3.146a.5.5 0 01.708-.708l4 4a.5.5 0 010 .708l-4 4a.5.5 0 01-.708-.708L13.293 8.5H1.5A.5.5 0 011 8z"/>
                 </svg>
-                <span class="branch-badge branch-badge-head" title="Head branch">@ctx.HeadBranch</span>
+                <span class="branch-badge" title="Base branch">@ctx.BaseBranch</span>
             </div>
         </div>
 
@@ -181,6 +181,14 @@
     {
         ReviewState.SetActiveIndex(null);
         // If we're not already on the home page, navigate there.
+        if (!Nav.Uri.TrimEnd('/').Equals(Nav.BaseUri.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
+            Nav.NavigateTo("/");
+    }
+
+    private void GoToSession(int idx)
+    {
+        ReviewState.SetActiveIndex(idx);
+        // Navigate to home if we're on another page (e.g. history dashboard).
         if (!Nav.Uri.TrimEnd('/').Equals(Nav.BaseUri.TrimEnd('/'), StringComparison.OrdinalIgnoreCase))
             Nav.NavigateTo("/");
     }

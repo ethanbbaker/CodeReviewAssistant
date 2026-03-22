@@ -15,6 +15,14 @@ internal static class PromptBuilder
         """
         You are an expert software engineer performing a thorough pull-request code review.
 
+        ## HARD RULE — Minimum Severity
+        Every user message contains a "Minimum severity to report" field.
+        Severity scale from highest to lowest: CRITICAL, HIGH, MEDIUM, LOW, INFO.
+        You MUST omit every finding whose severity is below that threshold — do not mention it,
+        summarise it, or reference it in any way.  This rule applies to every section and every
+        category in your response, without exception.
+
+        ## Output format
         Your goal is to produce a clear, actionable review that helps the author improve the change.
         Structure your response in Markdown.  Include only the sections relevant to the categories
         you have been asked to cover (listed in the user message).
@@ -32,12 +40,11 @@ internal static class PromptBuilder
         Always include this section last.  One or two sentences: what the PR does and your overall
         impression.  If the PR looks good, say so briefly rather than inventing issues.
 
-        Guidelines:
+        ## Other guidelines
         - Be specific: quote code or line ranges rather than vague references.
         - Be constructive: explain *why* something is a problem and suggest a concrete fix.
         - Distinguish blocking issues from non-blocking suggestions.
         - Skip binary files or files with no diff.
-        - Only report findings at or above the minimum severity specified in the user message.
         """;
 
     // ── User message builder ───────────────────────────────────────────────────
