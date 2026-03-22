@@ -131,6 +131,18 @@
 
     private async Task HandleStartReview(ReviewOptions options)
     {
+        // Enforce daily spend limit ($1.00/day) before making any API call.
+        // Uses a blended $9/MTok rate against today's combined token usage.
+        var todayTokens = await HistoryRepository.GetTodaysTotalTokensAsync();
+        if (todayTokens * 0.000_009m >= 1.00m)
+        {
+            var resetTime = DateTime.UtcNow.Date.AddDays(1);
+            Toast.ShowWarning(
+                $"Daily review budget ($1.00) reached. Resets at {resetTime:yyyy-MM-dd HH:mm} UTC.",
+                autoDismissMs: 0);
+            return;
+        }
+
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
