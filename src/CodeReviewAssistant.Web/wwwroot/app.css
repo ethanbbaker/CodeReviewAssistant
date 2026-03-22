@@ -809,6 +809,18 @@ h1:focus { outline: none; }
     cursor: not-allowed;
 }
 
+/* Wrapper that carries the tooltip for permanently-disabled model chips.
+   The button itself can't receive pointer events when disabled, so the
+   title/cursor must live on the parent element instead. */
+.rcb-chip-unavail-wrapper {
+    display: inline-flex;
+    cursor: not-allowed;
+}
+
+.rcb-chip-unavail-wrapper .rcb-chip {
+    pointer-events: none;
+}
+
 /* Category chips inside options panel */
 .rcb-chip-cat { border-radius: 6px; }
 

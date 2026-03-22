@@ -74,5 +74,5 @@
             : $"{ts.TotalSeconds:F1}s";
 
     private static string EstimateCost(int tokens) =>
-        tokens > 0 ? $"~${tokens / 1_000_000.0 * 9.0:F4}" : "—";
+        tokens > 0 ? $"~${tokens / 1_000_000.0 * 2.0:F4}" : "—";
 }

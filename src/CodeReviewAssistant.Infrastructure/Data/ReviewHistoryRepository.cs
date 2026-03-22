@@ -50,4 +50,13 @@ public sealed class ReviewHistoryRepository(ReviewDbContext db) : IReviewHistory
         // No-op if the record didn't exist.
         _ = rows;
     }
+
+    /// <inheritdoc/>
+    public async Task<long> GetTodaysTotalTokensAsync(CancellationToken ct = default)
+    {
+        var startOfDayUtc = DateTime.UtcNow.Date;
+        return await db.Reviews
+                       .Where(r => r.CreatedAt >= startOfDayUtc)
+                       .SumAsync(r => (long)r.TokensUsed, ct);
+    }
 }
