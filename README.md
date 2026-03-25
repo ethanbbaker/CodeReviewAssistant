@@ -87,6 +87,8 @@ dotnet run
 
 Then open **https://localhost:7067** (or http://localhost:5068) in your browser.
 
+**Live demo:** https://aireviewtool-cchfgjfaahchgtb7.westus2-01.azurewebsites.net/
+
 The SQLite history database is created automatically at `%AppData%\CodeReviewAssistant\history.db` on first run.
 
 ## Running tests
